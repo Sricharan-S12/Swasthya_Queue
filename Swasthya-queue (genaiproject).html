@@ -4,9 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Swasthya Queue — Rural Teleconsultation Triage</title>
+  <link rel="manifest" href="#" id="manifest-link"/>
+  <meta name="theme-color" content="#0D9488"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-  
-  <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -16,18 +17,71 @@
       --red: #E11D48; --red-dark: #BE123C; --red-light: #FFE4E6;
       --orange: #D97706; --orange-dark: #B45309; --orange-light: #FEF3C7;
       --blue: #2563EB; --blue-dark: #1D4ED8; --blue-light: #DBEAFE;
+      --purple: #7C3AED; --purple-light: #EDE9FE;
       --bg: #F1F5F9; --surface: #FFFFFF;
       --text-main: #0F172A; --text-muted: #475569; --text-light: #94A3B8;
       --border: #E2E8F0; --radius-lg: 16px; --radius-md: 12px; --radius-sm: 8px;
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
       --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
-      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.01);
-      --font-ui: 'Inter', sans-serif; --font-display: 'Inter', sans-serif;
+      --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.08);
+      --font-ui: 'Inter', sans-serif; --font-display: 'Outfit', sans-serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: var(--font-ui); background: var(--bg); color: var(--text-main); font-size: 14px; line-height: 1.6; letter-spacing: -0.01em; }
-    h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
-    
+    body { font-family: var(--font-ui); background: var(--bg); color: var(--text-main); font-size: 14px; line-height: 1.6; }
+    h1,h2,h3,h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
+
+    /* ── Offline / Sync Banner ── */
+    #offline-banner {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+      background: #1E293B; color: white;
+      padding: 10px 20px; font-size: 13px; font-weight: 600;
+      display: flex; align-items: center; gap: 10px;
+      transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    #offline-banner.show { transform: translateY(0); }
+    #offline-banner.online { background: #0F766E; }
+    .offline-dot { width: 8px; height: 8px; border-radius: 50%; background: #F87171; flex-shrink: 0; }
+    #offline-banner.online .offline-dot { background: #6EE7B7; }
+    #sync-count { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 100px; font-size: 11px; }
+
+    /* ── Escalation Alert Toast ── */
+    #escalation-toasts { position: fixed; bottom: 100px; right: 20px; z-index: 9998; display: flex; flex-direction: column; gap: 10px; max-width: 340px; }
+    .esc-toast {
+      background: #FFF; border: 2px solid var(--red); border-radius: var(--radius-md);
+      padding: 14px 16px; box-shadow: var(--shadow-lg);
+      animation: slideIn 0.4s cubic-bezier(0.4,0,0.2,1);
+      position: relative; overflow: hidden;
+    }
+    .esc-toast::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--red); animation: countdown var(--duration,120s) linear forwards;
+    }
+    @keyframes countdown { from { width: 100%; } to { width: 0%; } }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+    .esc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .esc-icon { font-size: 18px; animation: pulse 1s infinite; }
+    .esc-title { font-weight: 700; font-size: 13px; color: var(--red); font-family: var(--font-display); }
+    .esc-body { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
+    .esc-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .esc-btn { flex: 1; padding: 6px; border-radius: 6px; border: none; font-size: 11px; font-weight: 700; cursor: pointer; font-family: var(--font-ui); }
+    .esc-btn-red { background: var(--red); color: white; }
+    .esc-btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+    .esc-timer { font-size: 10px; color: var(--text-light); text-align: right; margin-top: 6px; }
+
+    /* ── Sync Indicator in Queue Cards ── */
+    .sync-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 100px; }
+    .sync-badge.pending { background: var(--orange-light); color: var(--orange-dark); }
+    .sync-badge.synced { background: var(--primary-light); color: var(--primary-dark); }
+
+    /* ── Storage Status Bar ── */
+    .storage-bar {
+      background: #FFF; border: 1px solid var(--border); border-radius: var(--radius-md);
+      padding: 10px 16px; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px; font-size: 12px;
+    }
+    .storage-indicator { display: flex; align-items: center; gap: 6px; }
+    .storage-dot { width: 8px; height: 8px; border-radius: 50%; }
+
     /* === Layout === */
     .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -41,16 +95,19 @@
     .hero-content { display: flex; justify-content: space-between; align-items: center; gap: 32px; position: relative; z-index: 1; }
     @media (max-width: 768px) { .hero-content { flex-direction: column; align-items: flex-start; } }
     .hero-eyebrow { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #5EEAD4; font-weight: 700; margin-bottom: 12px; display: inline-block; padding: 4px 12px; background: rgba(20, 184, 166, 0.1); border-radius: 100px; border: 1px solid rgba(20, 184, 166, 0.2); }
-    .hero-title { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em; }
+    .hero-title { font-size: 52px; font-weight: 800; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em; font-family: var(--font-display); }
     .hero-title span { color: #5EEAD4; font-weight: 400; }
     .hero-sub { font-size: 17px; color: #94A3B8; max-width: 540px; font-weight: 400; line-height: 1.7; }
-    
+    .feature-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    .feature-pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #CBD5E1; padding: 4px 10px; border-radius: 100px; font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 4px; }
+    .feature-pill.new { border-color: #5EEAD4; color: #5EEAD4; background: rgba(94, 234, 212, 0.1); }
+
     .stats-card { background: rgba(255,255,255,0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); border-radius: var(--radius-lg); padding: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
     .stat-item { text-align: center; }
     .stat-num { font-size: 32px; font-weight: 700; font-family: var(--font-display); color: #FFF; line-height: 1; }
     .stat-num.critical { color: #FCA5A5; animation: pulse 2s infinite; }
     .stat-lbl { font-size: 12px; color: #D1FAE5; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; font-weight: 500; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
     /* === Nav === */
     .nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow-sm); }
@@ -59,7 +116,7 @@
     .nav-tab:hover { background: #F1F5F9; color: var(--text-main); }
     .nav-tab.active { background: var(--primary-light); color: var(--primary-dark); }
     .badge { font-size: 11px; padding: 2px 8px; border-radius: 100px; font-weight: 700; }
-    .badge-red { background: var(--red); color: white; }
+    .badge-red { background: var(--red); color: white; animation: pulse 2s infinite; }
 
     /* === Main content === */
     .main-content { padding: 32px 0; }
@@ -68,25 +125,22 @@
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* === Global Components === */
-    .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: var(--shadow-md); overflow: hidden; margin-bottom: 24px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .card-header { padding: 20px 24px; border-bottom: 1px solid rgba(226, 232, 240, 0.6); display: flex; justify-content: space-between; align-items: center; background: rgba(248, 250, 252, 0.4); backdrop-filter: blur(4px); }
-    .card-title { font-size: 16px; font-weight: 700; color: var(--text-main); }
+    .card { background: var(--surface); border-radius: var(--radius-lg); border: 1px solid rgba(226, 232, 240, 0.8); box-shadow: var(--shadow-md); overflow: hidden; margin-bottom: 24px; }
+    .card-header { padding: 20px 24px; border-bottom: 1px solid rgba(226, 232, 240, 0.6); display: flex; justify-content: space-between; align-items: center; background: rgba(248, 250, 252, 0.4); }
+    .card-title { font-size: 16px; font-weight: 700; color: var(--text-main); font-family: var(--font-display); }
     .card-body { padding: 24px; }
-    
-    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-    @media (max-width: 900px) { .grid-4 { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px) { .grid-4 { grid-template-columns: 1fr; } }
-    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
-    @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
 
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font-ui); border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .btn-primary { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(13, 148, 136, 0.1), 0 4px 6px -1px rgba(13, 148, 136, 0.2); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--font-ui); border-radius: var(--radius-md); border: 1px solid transparent; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: var(--primary); color: white; }
     .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
-    .btn-primary:active { transform: translateY(0); }
     .btn-danger { background: var(--red); color: white; }
     .btn-danger:hover { background: var(--red-dark); }
+    .btn-warn { background: var(--orange); color: white; }
+    .btn-warn:hover { background: var(--orange-dark); }
     .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
-    .btn-outline:hover { background: #F1F5F9; border-color: #CBD5E1; }
+    .btn-outline:hover { background: #F1F5F9; }
+    .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+    .btn-sm { padding: 7px 14px; font-size: 12px; }
     .btn-full { width: 100%; }
 
     .input-grp { margin-bottom: 16px; }
@@ -98,26 +152,27 @@
     .pill-red { background: var(--red-light); color: var(--red-dark); }
     .pill-orange { background: var(--orange-light); color: var(--orange-dark); }
     .pill-green { background: var(--primary-light); color: var(--primary-dark); }
+    .pill-blue { background: var(--blue-light); color: var(--blue-dark); }
+    .pill-purple { background: var(--purple-light); color: var(--purple); }
 
     /* === Patient Flow === */
     .access-modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
     .access-card { padding: 20px; border: 2px solid var(--border); border-radius: var(--radius-lg); text-align: center; cursor: pointer; transition: all 0.2s; background: var(--surface); }
-    .access-card:hover { border-color: #CBD5E1; transform: translateY(-2px); box-shadow: var(--shadow-md); }
-    .access-card.selected { border-color: var(--primary); background: #F0FDF4; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1); }
+    .access-card:hover { border-color: #CBD5E1; transform: translateY(-2px); }
+    .access-card.selected { border-color: var(--primary); background: #F0FDF4; }
     .access-icon { font-size: 32px; margin-bottom: 12px; }
     .access-title { font-weight: 700; margin-bottom: 4px; }
     .access-desc { font-size: 12px; color: var(--text-muted); }
 
     .sym-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 24px; }
     .sym-btn { display: flex; align-items: center; gap: 8px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius-md); background: #FFF; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; color: var(--text-main); }
-    .sym-btn:hover { border-color: var(--primary); background: #F8FAFC; }
-    .sym-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); box-shadow: 0 2px 4px rgba(16,185,129,0.1); }
+    .sym-btn:hover { border-color: var(--primary); }
+    .sym-btn.active { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
 
     .sev-scale { display: flex; gap: 8px; margin-bottom: 24px; }
     .sev-item { flex: 1; padding: 12px 4px; text-align: center; border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; background: #FFF; }
     .sev-item .num { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
-    .sev-item .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
-    .sev-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .sev-item .lbl { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
     .sev-item.active { transform: translateY(-2px); box-shadow: var(--shadow-md); }
     .sev-item.active:nth-child(1) { border-color: var(--primary); background: var(--primary-light); color: var(--primary-dark); }
     .sev-item.active:nth-child(2) { border-color: #10B981; background: #D1FAE5; color: #065F46; }
@@ -127,11 +182,8 @@
 
     /* Ticket */
     .ticket-wrapper { display: flex; justify-content: center; padding: 20px; }
-    .ticket { background: #FFF; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); width: 100%; max-width: 400px; border: 1px solid var(--border); position: relative; }
+    .ticket { background: #FFF; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); width: 100%; max-width: 400px; border: 1px solid var(--border); }
     .ticket-head { background: var(--primary); color: #FFF; padding: 32px 24px; text-align: center; position: relative; border-bottom: 2px dashed rgba(255,255,255,0.4); }
-    .ticket-head::before, .ticket-head::after { content: ''; position: absolute; bottom: -10px; width: 20px; height: 20px; background: var(--bg); border-radius: 50%; border-top: 1px solid var(--border); border-bottom: none; z-index: 1; }
-    .ticket-head::before { left: -10px; border-right: 1px solid var(--border); transform: rotate(45deg); }
-    .ticket-head::after { right: -10px; border-left: 1px solid var(--border); transform: rotate(-45deg); }
     .ticket-no { font-family: var(--font-display); font-size: 64px; font-weight: 800; line-height: 1; letter-spacing: -2px; color: #A7F3D0; text-shadow: 0 2px 4px rgba(0,0,0,0.2); margin: 8px 0; }
     .ticket-body { padding: 24px; background: #FFF; }
     .ticket-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #F1F5F9; font-size: 14px; }
@@ -139,24 +191,31 @@
     .ticket-row .lbl { color: var(--text-muted); font-weight: 500; }
     .wait-box { background: var(--primary-light); padding: 16px; border-radius: var(--radius-md); text-align: center; margin-top: 20px; }
     .wait-time { font-size: 32px; font-weight: 800; color: var(--primary-dark); font-family: var(--font-display); line-height: 1; }
-    
-    /* === Doctor Dashboard queue === */
+    .offline-note { background: var(--orange-light); border: 1px solid #FCD34D; padding: 10px 14px; border-radius: var(--radius-md); font-size: 12px; color: var(--orange-dark); font-weight: 500; margin-top: 12px; display: none; }
+
+    /* === Doctor Dashboard === */
     .queue-list { display: flex; flex-direction: column; gap: 12px; }
     .q-card { background: #FFF; border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.2s; }
     .q-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
     .q-main { display: flex; padding: 16px; cursor: pointer; align-items: center; gap: 16px; }
     .q-indicator { width: 6px; align-self: stretch; border-radius: 6px; }
-    .q-indicator.red { background: var(--red); }
-    .q-indicator.orange { background: var(--orange); }
-    .q-indicator.green { background: var(--primary); }
     .q-avatar { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; }
     .q-details { flex: 1; }
-    .q-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .q-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
     .q-meta { font-size: 13px; color: var(--text-muted); }
     .q-status { text-align: right; }
-    .q-score { font-family: var(--font-display); font-size: 24px; font-weight: 700; color: var(--text-main); line-height: 1; }
+    .q-score { font-family: var(--font-display); font-size: 24px; font-weight: 700; line-height: 1; }
     .q-wait { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
-    
+
+    /* Escalation countdown on card */
+    .escalation-timer {
+      background: var(--red-light); border-top: 1px solid #FECDD3;
+      padding: 8px 16px; display: flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; color: var(--red-dark);
+    }
+    .esc-progress { flex: 1; height: 4px; background: #FECDD3; border-radius: 2px; overflow: hidden; }
+    .esc-progress-fill { height: 100%; background: var(--red); border-radius: 2px; transition: width 1s linear; }
+
     /* Expanded Patient Brief */
     .q-brief { border-top: 1px solid var(--border); padding: 20px; background: #F8FAFC; display: none; animation: fadeIn 0.3s ease; }
     .q-card.expanded .q-brief { display: block; }
@@ -165,114 +224,177 @@
     .vital-val { font-size: 18px; font-weight: 700; font-family: var(--font-display); }
     .vital-lbl { font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; font-weight: 600; }
     .val-danger { color: var(--red); } .val-warn { color: var(--orange); } .val-ok { color: var(--primary); }
-    
+
     .ai-summary { background: #EEF2FF; border-left: 4px solid #6366F1; padding: 16px; border-radius: 0 var(--radius-md) var(--radius-md) 0; margin-bottom: 20px; }
     .ai-summary p { font-size: 14px; color: #3730A3; font-weight: 500; }
-    
-    /* === Hospital / Maps System === */
-    .map-container { background: #E2E8F0; border-radius: var(--radius-lg); height: 280px; position: relative; overflow: hidden; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; }
-    .map-bg { position: absolute; inset: 0; background: url('https://www.transparenttextures.com/patterns/black-scales.png'); opacity: 0.05; }
-    .radar-ping { width: 60px; height: 60px; border-radius: 50%; background: rgba(59, 130, 246, 0.4); position: absolute; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
-    .map-marker { position: absolute; display: flex; flex-direction: column; align-items: center; z-index: 2; transform: translate(-50%, -50%); }
-    .marker-dot { width: 16px; height: 16px; border-radius: 50%; border: 3px solid #FFF; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-    .marker-lbl { background: #FFF; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; box-shadow: var(--shadow-sm); margin-top: 4px; white-space: nowrap; }
-    .ambu-marker { position: absolute; font-size: 24px; z-index: 3; transition: all 1s ease-in-out; }
-    @keyframes ping { 75%, 100% { transform: scale(2.5); opacity: 0; } }
 
-    .hosp-list { display: flex; flex-direction: column; gap: 12px; }
-    .hosp-card { border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 16px; cursor: pointer; transition: all 0.2s; background: #FFF; }
-    .hosp-card:hover { border-color: var(--blue-light); box-shadow: var(--shadow-md); }
-    .hosp-card.selected { border-color: var(--blue); background: #F0F9FF; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1); }
-    .hosp-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-    .hosp-name { font-size: 16px; font-weight: 700; color: var(--text-main); }
-    .hosp-dist { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 4px; }
-    
-    .bed-progress { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 8px; }
-    .bed-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
-    
-    .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #fff; width: 16px; height: 16px; animation: spin 1s linear infinite; display: none; }
-    .btn.loading .spinner { display: inline-block; }
-    .btn.loading span { display: none; }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* Loader Modal */
-    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-    .modal-overlay.active { opacity: 1; pointer-events: all; }
-    .modal-content { background: #FFF; padding: 32px; border-radius: var(--radius-lg); max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform 0.3s; }
-    .modal-overlay.active .modal-content { transform: translateY(0); }
-    
     /* === USSD Phone === */
     .phone-frame { background: #1E293B; border-radius: 24px; padding: 16px; width: 300px; margin: 0 auto; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border: 2px solid #334155; }
-    .phone-screen { background: #064E3B; border-radius: 12px; padding: 16px; min-height: 200px; font-family: 'Courier New', monospace; color: #A7F3D0; font-size: 14px; margin-bottom: 16px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; max-height:250px; }
+    .phone-screen { background: #064E3B; border-radius: 12px; padding: 16px; min-height: 200px; font-family: 'Courier New', monospace; color: #A7F3D0; font-size: 14px; margin-bottom: 16px; white-space: pre-wrap; word-break: break-word; overflow-y: auto; max-height: 250px; }
     .phone-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .btn-key { background: #334155; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 20px; font-weight: 600; cursor: pointer; display:flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+    .btn-key { background: #334155; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 20px; font-weight: 600; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
     .btn-key span { font-size: 9px; color: #94A3B8; font-weight: 400; margin-top: 4px; letter-spacing: 1px; }
     .btn-key:active { background: #475569; }
     .btn-call { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; grid-column: span 3; margin-top: 4px; }
-    
+
     /* === SMS Chatbot === */
-    .chat-frame { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; max-width: 400px; margin: 0 auto; background: #FFF; box-shadow: var(--shadow-md); }
-    .chat-header { background: #075E54; padding: 12px 16px; color: white; display: flex; align-items: center; gap: 12px; font-weight: 600;}
+    .chat-frame { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; max-width: 400px; margin: 0 auto; background: #FFF; }
+    .chat-header { background: #075E54; padding: 12px 16px; color: white; display: flex; align-items: center; gap: 12px; font-weight: 600; }
     .chat-body { background: #E5DDD5; height: 350px; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-    .chat-bubble { padding: 8px 12px; border-radius: 8px; font-size: 13.5px; max-width: 85%; position: relative; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+    .chat-bubble { padding: 8px 12px; border-radius: 8px; font-size: 13.5px; max-width: 85%; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
     .chat-left { background: #FFF; align-self: flex-start; border-top-left-radius: 0; }
     .chat-right { background: #DCF8C6; align-self: flex-end; border-top-right-radius: 0; }
     .chat-input-area { display: flex; padding: 10px; background: #F0F0F0; gap: 8px; }
-    
+
     /* === Auth Modal === */
     .auth-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
     .auth-overlay.active { opacity: 1; pointer-events: all; }
     .auth-content { background: var(--surface); padding: 32px; border-radius: var(--radius-lg); width: 100%; max-width: 400px; box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform 0.3s; border: 1px solid var(--border); }
     .auth-overlay.active .auth-content { transform: translateY(0); }
-    .auth-header { margin-bottom: 24px; text-align: center; }
-    .auth-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
-    .auth-sub { font-size: 14px; color: var(--text-muted); }
     .auth-error { color: var(--red); font-size: 13px; font-weight: 600; background: var(--red-light); padding: 8px; border-radius: 6px; margin-bottom: 16px; display: none; text-align: center; }
 
     /* === Landing Portal === */
     .portal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 800px; margin: 40px auto; }
     @media (max-width: 768px) { .portal-grid { grid-template-columns: 1fr; } }
-    .portal-card { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 40px 32px; text-align: center; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: var(--shadow-md); position: relative; overflow: hidden; }
+    .portal-card { background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 40px 32px; text-align: center; cursor: pointer; transition: all 0.3s; box-shadow: var(--shadow-md); }
     .portal-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: var(--primary); }
     .portal-icon { font-size: 56px; margin-bottom: 20px; display: inline-block; }
-    .portal-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; }
+    .portal-title { font-size: 24px; font-weight: 800; color: var(--text-main); margin-bottom: 12px; font-family: var(--font-display); }
     .portal-desc { font-size: 15px; color: var(--text-muted); line-height: 1.6; margin-bottom: 24px; }
-    .portal-btn { background: var(--primary-light); color: var(--primary-dark); padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; border: none; }
+    .portal-btn { background: var(--primary-light); color: var(--primary-dark); padding: 12px 24px; border-radius: 100px; font-weight: 700; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; border: none; cursor: pointer; }
     .portal-card:hover .portal-btn { background: var(--primary); color: white; }
     .portal-card.doctor:hover { border-color: var(--blue); }
     .portal-card.doctor:hover .portal-btn { background: var(--blue); color: white; }
     .portal-card.doctor .portal-btn { background: var(--blue-light); color: var(--blue-dark); }
 
-    /* === Video Call Overlay === */
-    .video-modal { background: #0B1120; padding: 0; max-width: 900px; width: 95%; height: 80vh; overflow: hidden; display: flex; flex-direction: column; position: relative; border: 1px solid #1E293B; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); margin: 0 auto; }
-    .video-header { padding: 16px 24px; background: rgba(15, 23, 42, 0.8); display: flex; justify-content: space-between; align-items: center; color: white; border-bottom: 1px solid #1E293B; position: absolute; top: 0; left: 0; right: 0; z-index: 10; backdrop-filter: blur(8px); }
-    .video-main-feed { flex: 1; background: #0F172A; display: flex; align-items: center; justify-content: center; position: relative; }
-    .video-pip { position: absolute; bottom: 100px; right: 24px; width: 160px; height: 120px; background: #1E293B; border-radius: var(--radius-md); border: 2px solid #334155; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #64748B; font-size: 12px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5); }
-    .video-controls { padding: 20px; display: flex; justify-content: center; gap: 16px; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; border-top: 1px solid #1E293B; }
-    .ctrl-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: #334155; color: white; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-    .ctrl-btn:hover { background: #475569; }
+    /* === Video Call === */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+    .modal-overlay.active { opacity: 1; pointer-events: all; }
+    .modal-content { background: #FFF; padding: 32px; border-radius: var(--radius-lg); max-width: 400px; width: 90%; text-align: center; box-shadow: var(--shadow-lg); transform: translateY(20px); transition: transform 0.3s; }
+    .modal-overlay.active .modal-content { transform: translateY(0); }
+    .video-modal { background: #0B1120; max-width: 900px; width: 95%; height: 80vh; display: flex; flex-direction: column; position: relative; border: 1px solid #1E293B; border-radius: var(--radius-lg); overflow: hidden; }
+    .video-header { padding: 16px 24px; background: rgba(15,23,42,0.8); display: flex; justify-content: space-between; align-items: center; color: white; border-bottom: 1px solid #1E293B; position: absolute; top: 0; left: 0; right: 0; z-index: 10; backdrop-filter: blur(8px); }
+    .video-main-feed { flex: 1; background: #0F172A; display: flex; align-items: center; justify-content: center; }
+    .video-pip { position: absolute; bottom: 100px; right: 24px; width: 160px; height: 120px; background: #1E293B; border-radius: var(--radius-md); border: 2px solid #334155; display: flex; align-items: center; justify-content: center; color: #64748B; font-size: 12px; }
+    .video-controls { padding: 20px; display: flex; justify-content: center; gap: 16px; background: rgba(15,23,42,0.9); position: absolute; bottom: 0; left: 0; right: 0; z-index: 10; border-top: 1px solid #1E293B; }
+    .ctrl-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: #334155; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .ctrl-btn.danger { background: var(--red); }
-    .ctrl-btn.danger:hover { background: var(--red-dark); }
-    .pulse-text { animation: blink 2s infinite; font-size: 18px; color: #94A3B8; font-weight: 500; }
-    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    .pulse-text { animation: pulse 2s infinite; font-size: 18px; color: #94A3B8; font-weight: 500; }
 
-    /* === Doctor Messaging Modal === */
-    .msg-modal { padding: 0; max-width: 500px; width: 100%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-lg); margin: 0 auto;}
+    /* === Message Modal === */
+    .msg-modal { padding: 0; max-width: 500px; width: 100%; height: 600px; max-height: 80vh; display: flex; flex-direction: column; overflow: hidden; background: #F8FAFC; border: 1px solid var(--border); border-radius: var(--radius-lg); }
     .msg-header { padding: 16px 20px; background: #FFF; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .msg-body { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F1F5F9; }
     .msg-footer { padding: 16px 20px; background: #FFF; border-top: 1px solid var(--border); display: flex; gap: 12px; align-items: center; }
 
-    /* === Floating Language Selector === */
-    .lang-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 12px 16px; border: 1px solid rgba(226, 232, 240, 0.8); display: flex; align-items: center; gap: 12px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); flex-wrap: wrap; max-width: 200px;}
-    .lang-widget:hover { transform: translateY(-4px); box-shadow: 0 15px 30px -5px rgba(0,0,0,0.1); }
+    /* Spinner */
+    .spinner { border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top: 3px solid #fff; width: 16px; height: 16px; animation: spin 1s linear infinite; display: none; }
+    .btn.loading .spinner { display: inline-block; }
+    .btn.loading span { display: none; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* lang widget */
+    .lang-widget { position: fixed; bottom: 24px; right: 24px; z-index: 1000; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow-lg); padding: 12px 16px; border: 1px solid rgba(226, 232, 240, 0.8); display: flex; align-items: center; gap: 12px; }
+
+    /* Referral Panel Styles */
+    #panel-dispatch {
+      --green: #1A6B48; --green-l: #D5F5E3; --green-d: #0d4a32;
+      --r: #C0392B; --r-l: #FADBD8; --o: #E67E22; --o-l: #FDEBD0;
+      --b: #2980B9; --b-l: #D6EAF8; --p: #6C3483; --p-l: #E8DAEF;
+      --bg: #FAFAF8; --card: #FFFFFF; --border2: #E8E6E0;
+      --txt2: #6b6b68; --txt3: #9a9a96;
+    }
+    .alert-bar { display: flex; align-items: center; gap: 10px; background: #FADBD8; border: 1px solid #f0a0a0; border-radius: 12px; padding: 10px 14px; margin-bottom: 14px; }
+    .alert-dot { width: 9px; height: 9px; border-radius: 50%; background: #C0392B; animation: pulse 1.2s infinite; flex-shrink: 0; }
+    .alert-txt { font-size: 12px; color: #C0392B; font-weight: 500; flex: 1; }
+    .alert-time { font-size: 11px; color: #C0392B; opacity: 0.7; }
+    .h-card { background: #FFF; border: 1.5px solid #E8E6E0; border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 8px; }
+    .h-card:hover { border-color: #2980B9; }
+    .h-card.sel { border-color: #2980B9; border-width: 2px; }
+    .h-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
+    .h-rank { width: 26px; height: 26px; border-radius: 50%; background: #FAFAF8; border: 1px solid #E8E6E0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: #6b6b68; flex-shrink: 0; }
+    .h-rank.r1 { background: #D6EAF8; border-color: #2980B9; color: #2980B9; }
+    .h-name { flex: 1; }
+    .h-name-title { font-size: 13px; font-weight: 600; }
+    .h-name-sub { font-size: 11px; color: #6b6b68; margin-top: 1px; }
+    .h-detail { padding: 0 14px 12px; border-top: 1px solid #E8E6E0; }
+    .h-row { display: flex; justify-content: space-between; font-size: 12px; padding: 5px 0; border-bottom: 1px solid #E8E6E0; }
+    .h-row:last-child { border-bottom: none; }
+    .h-row .k { color: #6b6b68; }
+    .h-row .v.ok { color: #1A6B48; font-weight: 500; }
+    .h-row .v.warn { color: #E67E22; font-weight: 500; }
+    .bed-bar-wrap { margin: 8px 0; }
+    .bed-bar-top { display: flex; justify-content: space-between; font-size: 10px; color: #9a9a96; margin-bottom: 3px; }
+    .bed-track { height: 6px; background: #FAFAF8; border-radius: 3px; overflow: hidden; border: 1px solid #E8E6E0; }
+    .bed-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+    .h-btns { display: flex; gap: 7px; margin-top: 10px; }
+    .ambu-section { background: #FFF; border: 1px solid #E8E6E0; border-radius: 12px; overflow: hidden; }
+    .ambu-hd { display: flex; align-items: center; justify-content: space-between; padding: 11px 14px; background: #fef9f5; border-bottom: 1px solid #E8E6E0; }
+    .ambu-hd-title { font-size: 13px; font-weight: 600; color: #7d4006; }
+    .ambu-live { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #E67E22; }
+    .ambu-ldot { width: 7px; height: 7px; border-radius: 50%; background: #E67E22; animation: pulse 1.5s infinite; }
+    .ambu-body { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .ambu-unit { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid #E8E6E0; border-radius: 8px; background: #FAFAF8; }
+    .ambu-ico { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; background: #D6EAF8; }
+    .ambu-info { flex: 1; }
+    .ambu-id { font-size: 12px; font-weight: 600; }
+    .ambu-loc { font-size: 10px; color: #6b6b68; margin-top: 2px; }
+    .ambu-eta { font-size: 12px; font-weight: 600; margin-bottom: 4px; }
+    .ambu-eta.ok { color: #1A6B48; }
+    .ambu-eta.slow { color: #E67E22; }
+    .disp-btn { padding: 6px 12px; border-radius: 8px; border: none; background: #E67E22; color: #fff; font-size: 11px; font-weight: 600; cursor: pointer; }
+    .disp-btn.done { background: #1A6B48; cursor: default; }
+    .map-area { height: 180px; background: #f0f4f0; border-radius: 8px; overflow: hidden; margin-bottom: 10px; border: 1px solid #E8E6E0; }
+    .ref-msg-box { background: #FFF; border: 1px solid #E8E6E0; border-radius: 12px; overflow: hidden; }
+    .rmb-hd { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #E8DAEF; border-bottom: 1px solid #ddd; }
+    .rmb-title { font-size: 13px; font-weight: 600; color: #4a235a; }
+    .msg-pre { background: #FAFAF8; border: 1px solid #E8E6E0; border-left: 3px solid #6C3483; border-radius: 8px; padding: 10px 12px; font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.8; color: #0F172A; white-space: pre-wrap; outline: none; margin-bottom: 10px; }
+    .msg-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 10px; }
+    .msg-meta-item { background: #FAFAF8; border: 1px solid #E8E6E0; border-radius: 8px; padding: 7px 10px; }
+    .mm-key { font-size: 9px; color: #9a9a96; text-transform: uppercase; letter-spacing: 0.5px; }
+    .mm-val { font-size: 12px; font-weight: 500; margin-top: 2px; }
+    .ref-btns { display: flex; gap: 7px; }
+    .timeline { background: #FFF; border: 1px solid #E8E6E0; border-radius: 12px; padding: 14px; }
+    .tl-item { display: flex; gap: 12px; align-items: flex-start; padding-bottom: 10px; }
+    .tl-item:last-child { padding-bottom: 0; }
+    .tl-left { display: flex; flex-direction: column; align-items: center; }
+    .tl-d { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .tl-line { width: 1.5px; flex: 1; min-height: 18px; margin-top: 2px; }
+    .tl-done-d { background: #1A6B48; }
+    .tl-done-l { background: #1A6B48; }
+    .tl-active-d { background: #E67E22; animation: pulse 1.5s infinite; }
+    .tl-active-l { background: #E8E6E0; }
+    .tl-pend-d { background: #E8E6E0; }
+    .tl-pend-l { background: #E8E6E0; }
+    .tl-label { font-size: 13px; font-weight: 500; }
+    .tl-time { font-size: 11px; color: #9a9a96; margin-top: 1px; }
+    .sec-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+    .ai-brief { background: #EEF2FF; border-left: 4px solid #6366F1; padding: 12px; border-radius: 0 8px 8px 0; font-size: 13px; color: #3730A3; font-weight: 500; }
+    .flow-step { display: flex; gap: 14px; align-items: flex-start; padding: 14px; background: #FFF; border: 1px solid #E8E6E0; border-radius: 12px; margin-bottom: 10px; }
+    .flow-num { width: 32px; height: 32px; border-radius: 50%; background: #1A6B48; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .flow-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    .flow-desc { font-size: 12px; color: #6b6b68; line-height: 1.7; }
+    .score-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .score-table th { background: #FAFAF8; padding: 8px 10px; text-align: left; font-weight: 600; font-size: 11px; color: #6b6b68; border-bottom: 1px solid #E8E6E0; }
+    .score-table td { padding: 8px 10px; border-bottom: 1px solid #E8E6E0; }
   </style>
 </head>
 <body>
 
+  <!-- Offline / Sync Banner -->
+  <div id="offline-banner">
+    <div class="offline-dot"></div>
+    <div id="offline-msg">You are offline — patients are being saved locally</div>
+    <div id="sync-count" style="display:none;"></div>
+  </div>
+
+  <!-- Escalation Toast Container -->
+  <div id="escalation-toasts"></div>
+
   <!-- Floating Language Widget -->
   <div class="lang-widget">
     <div style="font-size: 20px;">🌐</div>
-    <div id="google_translate_element"></div>
+    <div id="google_translate_element_float"></div>
   </div>
 
   <!-- HERO -->
@@ -281,9 +403,15 @@
       <div>
         <div class="hero-eyebrow">Smart Triage & Referral OS</div>
         <h1 class="hero-title">स्वास्थ्य Queue<br><span>Swasthya Queue</span></h1>
-        <p class="hero-sub">AI-powered teleconsultation & emergency triage platform for rural primary health centres. Instant assessment via Web, SMS or USSD.</p>
+        <p class="hero-sub">AI-powered teleconsultation & emergency triage platform for rural primary health centres.</p>
+        <div class="feature-pills">
+          <span class="feature-pill new">⚡ Offline-first PWA</span>
+          <span class="feature-pill new">🔄 Auto-sync on reconnect</span>
+          <span class="feature-pill new">🚨 RED patient escalation</span>
+          <span class="feature-pill">📟 USSD *599#</span>
+          <span class="feature-pill">💬 WhatsApp / SMS</span>
+        </div>
       </div>
-
     </div>
   </header>
 
@@ -291,56 +419,66 @@
   <nav class="nav" id="main-nav" style="display: none;">
     <div class="nav-inner">
       <button id="tab-patient" class="nav-tab active" onclick="switchTab('patient')">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         Register Patient
       </button>
       <button id="tab-doctor" class="nav-tab" onclick="switchTab('doctor')">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
         Doctor Dashboard
       </button>
       <button id="tab-dispatch" class="nav-tab" onclick="switchTab('dispatch')">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
         Command Center <span class="badge badge-red" id="nav-badge">Alert</span>
       </button>
       <button id="tab-about" class="nav-tab" onclick="switchTab('about')">
-        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         How it Works
       </button>
-      <div id="google_translate_element" style="margin-left: auto; padding-right: 12px; display: flex; align-items: center;"></div>
-      <div id="user-info" style="display: none; align-items: center; gap: 12px; border-left: 1px solid var(--border); padding-left: 12px;">
+      <div id="user-info" style="display: none; align-items: center; gap: 12px; margin-left: auto; border-left: 1px solid var(--border); padding-left: 12px;">
         <span id="user-name-display" style="font-size: 14px; font-weight: 600; color: var(--primary-dark);">User</span>
         <button class="nav-tab" onclick="handleLogout()" style="color: var(--red); padding: 6px 12px;">Logout</button>
       </div>
     </div>
   </nav>
 
-  <!-- MAIN CONTAINER -->
+  <!-- MAIN -->
   <main class="container main-content">
 
     <!-- === LANDING PORTAL === -->
     <section id="panel-landing" class="panel active">
       <div style="text-align: center; margin-bottom: 24px;">
-        <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">Select Your Portal</h2>
+        <h2 style="font-size: 32px; font-weight: 800;">Select Your Portal</h2>
         <p style="color: var(--text-muted); font-size: 16px;">Choose your operational mode to continue.</p>
       </div>
       <div class="portal-grid">
         <button class="portal-card" onclick="enterPortal('clinic')">
           <div class="portal-icon">🏥</div>
           <h3 class="portal-title">Clinic Operations</h3>
-          <p class="portal-desc">Public access for Patient Registration and Command Center dashboard. No password required.</p>
+          <p class="portal-desc">Patient Registration and Command Center. Works offline — no internet required.</p>
           <div class="portal-btn">Enter Clinic Portal <span>→</span></div>
         </button>
         <button class="portal-card doctor" onclick="enterPortal('doctor-login')">
           <div class="portal-icon">👨‍⚕️</div>
           <h3 class="portal-title">Doctor Dashboard</h3>
-          <p class="portal-desc">Secure access for medical staff to view patient queues and teleconsultation vitals.</p>
+          <p class="portal-desc">Secure access for medical staff. Live queue with RED patient escalation alerts.</p>
           <div class="portal-btn">Secure Login <span>→</span></div>
         </button>
       </div>
     </section>
 
-    <!-- === PATIENT REGISTRATION PANEL === -->
+    <!-- === PATIENT REGISTRATION === -->
     <section id="panel-patient" class="panel">
+      <!-- Offline / Sync Status -->
+      <div class="storage-bar" id="storage-status-bar">
+        <div class="storage-indicator">
+          <div class="storage-dot" id="conn-dot" style="background: var(--primary);"></div>
+          <span id="conn-label" style="font-weight: 600; color: var(--primary-dark);">Online</span>
+        </div>
+        <span style="color: var(--border); margin: 0 4px;">|</span>
+        <span id="pending-label" style="color: var(--text-muted);">0 patients pending sync</span>
+        <button onclick="manualSync()" style="margin-left: auto; font-size: 11px; padding: 4px 10px; border-radius: 100px; border: 1px solid var(--border); background: white; cursor: pointer; font-weight: 600; color: var(--text-muted);">↻ Sync now</button>
+      </div>
+
       <div class="access-modes">
         <div class="access-card selected" onclick="selectMode('web', this)">
           <div class="access-icon">🌐</div>
@@ -369,7 +507,7 @@
           <div class="card-body">
             <form id="form-details" onsubmit="event.preventDefault(); nextStep();">
               <div class="input-grp">
-                <label class="input-label">Preferred Language / पसंदीदा भाषा</label>
+                <label class="input-label">Preferred Language</label>
                 <select id="f-lang" class="input-field">
                   <option value="en">English</option>
                   <option value="hi">Hindi (हिंदी)</option>
@@ -403,7 +541,7 @@
                 <input type="text" id="f-med" class="input-field" placeholder="Diabetes, Hypertension, etc.">
               </div>
               <div style="text-align: right; margin-top: 16px;">
-                <button type="submit" class="btn btn-primary">Continue Setup <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg></button>
+                <button type="submit" class="btn btn-primary">Continue Setup →</button>
               </div>
             </form>
           </div>
@@ -416,11 +554,9 @@
           </div>
           <div class="card-body">
             <label class="input-label" style="margin-bottom: 12px;">Select all presenting symptoms</label>
-            <div class="sym-grid" id="sym-container">
-              <!-- Dynamically populated -->
-            </div>
-            
-            <label class="input-label" style="margin-bottom: 12px; margin-top: 16px;">Patient Discomfort / Severity Rating (1 = Mild, 5 = Unbearable)</label>
+            <div class="sym-grid" id="sym-container"></div>
+
+            <label class="input-label" style="margin-bottom: 12px; margin-top: 16px;">Severity Rating (1 = Mild, 5 = Unbearable)</label>
             <div class="sev-scale">
               <div class="sev-item" onclick="setSeverity(1, this)"><div class="num">1</div><div class="lbl">Mild</div></div>
               <div class="sev-item" onclick="setSeverity(2, this)"><div class="num">2</div><div class="lbl">Slight</div></div>
@@ -464,12 +600,13 @@
               <div class="ticket-row"><span>Priority</span><span id="tk-prio" style="font-weight: 700;">NORMAL</span></div>
               <div class="ticket-row"><span>Triage Score</span><span id="tk-score">0 / 20</span></div>
               <div class="ticket-row"><span>Time Joined</span><span id="tk-time">10:00 AM</span></div>
-              
               <div class="wait-box" id="tk-wait-box">
                 <div class="wait-time" id="tk-wait">15m</div>
                 <div style="font-size: 12px; font-weight: 600; opacity: 0.8; margin-top: 4px;">Estimated Wait Time</div>
               </div>
-
+              <div class="offline-note" id="offline-note">
+                📴 Saved offline — will sync automatically when internet returns.
+              </div>
               <button class="btn btn-outline btn-full" style="margin-top: 24px;" onclick="resetForm()">Register New Patient</button>
             </div>
           </div>
@@ -483,11 +620,11 @@
           <div class="card-body">
             <div class="grid-2" style="align-items: center;">
               <div>
-                <p style="margin-bottom: 16px; color: var(--text-muted);">Simulate basic feature phone access. No 3G/4G or smartphone required. Type <strong>*599#</strong> to launch Swasthya USSD App.</p>
+                <p style="margin-bottom: 16px; color: var(--text-muted);">Works on any 2G network. Type <strong>*599#</strong> and press Send to begin.</p>
                 <div class="phone-frame">
                   <div class="phone-screen" id="ussd-screen">Menu:\nType *599# and press Send.\n\n_</div>
                   <div class="phone-grid">
-                    <button class="btn-key" onclick="ussdInput('1')">1<span></span></button>
+                    <button class="btn-key" onclick="ussdInput('1')">1</button>
                     <button class="btn-key" onclick="ussdInput('2')">2<span>ABC</span></button>
                     <button class="btn-key" onclick="ussdInput('3')">3<span>DEF</span></button>
                     <button class="btn-key" onclick="ussdInput('4')">4<span>GHI</span></button>
@@ -496,9 +633,9 @@
                     <button class="btn-key" onclick="ussdInput('7')">7<span>PQRS</span></button>
                     <button class="btn-key" onclick="ussdInput('8')">8<span>TUV</span></button>
                     <button class="btn-key" onclick="ussdInput('9')">9<span>WXYZ</span></button>
-                    <button class="btn-key" onclick="ussdInput('*')">*<span></span></button>
-                    <button class="btn-key" onclick="ussdInput('0')">0<span>+</span></button>
-                    <button class="btn-key" onclick="ussdInput('#')">#<span></span></button>
+                    <button class="btn-key" onclick="ussdInput('*')">*</button>
+                    <button class="btn-key" onclick="ussdInput('0')">0</button>
+                    <button class="btn-key" onclick="ussdInput('#')">#</button>
                     <button class="btn-call" onclick="ussdSend()">Send / Call</button>
                   </div>
                 </div>
@@ -509,8 +646,9 @@
                   <li><strong>Coverage:</strong> 100% of 2G mobile networks</li>
                   <li><strong>Latency:</strong> ~400ms per interactive step</li>
                   <li><strong>Telephony API:</strong> Plivo / Twilio USSD Bridge</li>
-                  <li><strong>Language:</strong> English + Local Dialect (Hindi)</li>
-                  <li><strong>Auto-Gen Token:</strong> SMS fallback triggered on completion.</li>
+                  <li><strong>Language:</strong> English + Hindi + 3 regional</li>
+                  <li><strong>Auto-Gen Token:</strong> SMS fallback on completion</li>
+                  <li><strong>Offline queue:</strong> Stored locally, synced later</li>
                 </ul>
               </div>
             </div>
@@ -526,67 +664,73 @@
             <div class="grid-2">
               <div class="chat-frame">
                 <div class="chat-header">
-                  <div style="width:36px; height:36px; background:#25D366; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px;">🏥</div>
+                  <div style="width:36px;height:36px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;">🏥</div>
                   <div>
-                    <div style="font-size:15px; line-height:1;">Swasthya Bot</div>
-                    <div style="font-size:11px; font-weight:400; opacity:0.8; margin-top:2px;">online</div>
+                    <div style="font-size:15px;line-height:1;">Swasthya Bot</div>
+                    <div style="font-size:11px;font-weight:400;opacity:0.8;margin-top:2px;">online</div>
                   </div>
                 </div>
                 <div class="chat-body" id="chat-body">
                   <div class="chat-bubble chat-left">Namaste! Welcome to Swasthya Queue. Do you want to register a new patient? Reply YES or NO.</div>
                 </div>
                 <div class="chat-input-area">
-                  <input type="text" id="chat-input" class="input-field" style="border-radius: 20px; padding: 8px 16px; margin: 0; outline:none; border:none; box-shadow:none;" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendSMS()">
-                  <button class="btn btn-primary" style="border-radius: 50%; width: 42px; height: 42px; padding: 0;" onclick="sendSMS()">→</button>
+                  <input type="text" id="chat-input" class="input-field" style="border-radius:20px;padding:8px 16px;margin:0;border:none;" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendSMS()">
+                  <button class="btn btn-primary" style="border-radius:50%;width:42px;height:42px;padding:0;" onclick="sendSMS()">→</button>
                 </div>
               </div>
-              <div style="background: #F8FAFC; padding: 24px; border-radius: var(--radius-md); border: 1px solid var(--border);">
+              <div style="background:#F8FAFC;padding:24px;border-radius:var(--radius-md);border:1px solid var(--border);">
                 <h4 style="margin-bottom:12px;">Conversational AI Backend</h4>
-                <p style="color:var(--text-muted); font-size: 13px; margin-bottom: 12px;">This flow simulates an async conversation via WhatsApp Business API or standard SMS protocols.</p>
-                <ul style="color: var(--text-muted); padding-left: 20px; font-size: 13px; line-height:2;">
-                  <li><strong>NLP Engine:</strong> Dialogflow / Gemini processing</li>
+                <ul style="color:var(--text-muted);padding-left:20px;font-size:13px;line-height:2;">
+                  <li><strong>NLP Engine:</strong> Dialogflow / Gemini</li>
                   <li><strong>Media:</strong> Supports image uploads for wounds</li>
-                  <li><strong>Accessibility:</strong> High accessibility for literate users</li>
+                  <li><strong>Accessibility:</strong> High for literate users</li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
       </div>
-
     </section>
 
     <!-- === DOCTOR DASHBOARD === -->
     <section id="panel-doctor" class="panel">
-      
-      <!-- Analytics Section -->
+      <!-- Escalation Config Banner -->
+      <div style="background: linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 100%); border: 1px solid #FDE68A; border-radius: var(--radius-md); padding: 14px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 20px;">⏱️</span>
+        <div style="flex:1;">
+          <div style="font-size: 13px; font-weight: 700; color: #92400E;">RED Patient Escalation Protocol Active</div>
+          <div style="font-size: 12px; color: #B45309; margin-top: 2px;">2 min no response → alert backup doctor + ASHA worker &nbsp;|&nbsp; 5 min → auto-dispatch ambulance + referral</div>
+        </div>
+        <span class="pill" style="background:#FDE68A;color:#92400E;">LIVE</span>
+      </div>
+
       <div class="grid-4" style="margin-bottom: 24px;">
         <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--blue);">
-          <div class="card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Patients Today</div>
-            <div style="font-size: 28px; font-weight: 800; font-family: var(--font-display); color: var(--text-main);">42</div>
-            <div style="font-size: 12px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg> 12% vs yesterday</div>
+          <div class="card-body" style="padding:16px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Patients Today</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-display);">42</div>
+            <div style="font-size:12px;color:var(--primary);font-weight:600;">↑ 12% vs yesterday</div>
           </div>
         </div>
         <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--red);">
-          <div class="card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Critical (RED)</div>
-            <div style="font-size: 28px; font-weight: 800; font-family: var(--font-display); color: var(--red);">3</div>
-            <div style="font-size: 12px; color: var(--red); font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Immediate attention</div>
+          <div class="card-body" style="padding:16px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Critical (RED)</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-display);color:var(--red);" id="red-count">3</div>
+            <div style="font-size:12px;color:var(--red);font-weight:600;">Immediate attention</div>
           </div>
         </div>
         <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--orange);">
-          <div class="card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Avg. Wait Time</div>
-            <div style="font-size: 28px; font-weight: 800; font-family: var(--font-display); color: var(--text-main);">14m</div>
-            <div style="font-size: 12px; color: var(--primary); font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg> 5m vs yesterday</div>
+          <div class="card-body" style="padding:16px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Avg. Wait Time</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-display);">14m</div>
+            <div style="font-size:12px;color:var(--primary);font-weight:600;">↓ 5m vs yesterday</div>
           </div>
         </div>
         <div class="card" style="margin-bottom: 0; border-left: 4px solid var(--primary);">
-          <div class="card-body" style="padding: 16px; display: flex; flex-direction: column; gap: 4px;">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase;">Consults Done</div>
-            <div style="font-size: 28px; font-weight: 800; font-family: var(--font-display); color: var(--text-main);">18</div>
-            <div style="font-size: 12px; color: var(--text-muted); font-weight: 600; display: flex; align-items: center; gap: 4px;"><svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Via tele-platform</div>
+          <div class="card-body" style="padding:16px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Pending Sync</div>
+            <div style="font-size:28px;font-weight:800;font-family:var(--font-display);" id="sync-count-dash">0</div>
+            <div style="font-size:12px;color:var(--text-muted);font-weight:600;" id="sync-dash-label">All synced</div>
           </div>
         </div>
       </div>
@@ -594,316 +738,149 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
         <div>
           <h2 style="font-size: 24px;">Queue Management</h2>
-          <p style="color: var(--text-muted); font-size: 14px;">Live auto-prioritized feed based on triage scores.</p>
+          <p style="color: var(--text-muted); font-size: 14px;">Live auto-prioritized feed. Click a patient to expand details.</p>
         </div>
         <div style="display: flex; gap: 12px; font-size: 12px; font-weight: 600; color: var(--text-muted);">
-          <span style="display: flex; align-items: center; gap: 4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div> RED (Immediate)</span>
-          <span style="display: flex; align-items: center; gap: 4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--orange);"></div> ORANGE (30m)</span>
-          <span style="display: flex; align-items: center; gap: 4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--primary);"></div> GREEN (Routine)</span>
+          <span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--red);"></div> RED</span>
+          <span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--orange);"></div> ORANGE</span>
+          <span style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--primary);"></div> GREEN</span>
         </div>
       </div>
 
-      <div class="queue-list" id="doctor-queue">
-        <!-- Rendered via JS -->
-      </div>
-
+      <div class="queue-list" id="doctor-queue"></div>
     </section>
 
-    <!-- === REFERRAL & DISPATCH === -->
-<style>
-#panel-dispatch {
-  --green:#1A6B48;--green-l:#D5F5E3;--green-d:#0d4a32;
-  --red:#C0392B;--red-l:#FADBD8;
-  --orange:#E67E22;--orange-l:#FDEBD0;
-  --blue:#2980B9;--blue-l:#D6EAF8;
-  --purple:#6C3483;--purple-l:#E8DAEF;
-  --bg:#FAFAF8;--card:#FFFFFF;
-  --border:#E8E6E0;
-  --txt2:#6b6b68;--txt3:#9a9a96;
-  --radius:12px;--radius-sm:8px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
-}
-/* ── REFERRAL MODULE ── */
-.alert-bar{display:flex;align-items:center;gap:10px;background:var(--red-l);border:1px solid #f0a0a0;border-radius:var(--radius);padding:10px 14px;margin-bottom:14px}
-.alert-dot{width:9px;height:9px;border-radius:50%;background:var(--red);animation:blink 1.2s infinite;flex-shrink:0}
-.alert-txt{font-size:12px;color:var(--red);font-weight:500;flex:1}
-.alert-time{font-size:11px;color:var(--red);opacity:.7}
-
-.hosp-list{display:flex;flex-direction:column;gap:8px}
-.h-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:.2s;box-shadow:var(--shadow)}
-.h-card:hover{border-color:var(--blue);box-shadow:var(--shadow-md)}
-.h-card.sel{border-color:var(--blue);border-width:2px}
-.h-top{display:flex;align-items:center;gap:10px;padding:12px 14px}
-.h-rank{width:26px;height:26px;border-radius:50%;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--txt2);flex-shrink:0}
-.h-rank.r1{background:var(--blue-l);border-color:var(--blue);color:var(--blue)}
-.h-name{flex:1}
-.h-name-title{font-size:13px;font-weight:600}
-.h-name-sub{font-size:11px;color:var(--txt2);margin-top:1px}
-.h-detail{padding:0 14px 12px;border-top:1px solid var(--border)}
-.h-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border)}
-.h-row:last-child{border-bottom:none}
-.h-row .k{color:var(--txt2)}
-.h-row .v.ok{color:var(--green);font-weight:500}
-.h-row .v.warn{color:var(--orange);font-weight:500}
-.bed-bar-wrap{margin:8px 0}
-.bed-bar-top{display:flex;justify-content:space-between;font-size:10px;color:var(--txt3);margin-bottom:3px}
-.bed-track{height:6px;background:var(--bg);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
-.bed-fill{height:100%;border-radius:3px;transition:width .5s}
-.h-btns{display:flex;gap:7px;margin-top:10px}
-
-/* AMBULANCE */
-.ambu-section{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.ambu-hd{display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#fef9f5;border-bottom:1px solid var(--border)}
-.ambu-hd-title{font-size:13px;font-weight:600;color:#7d4006}
-.ambu-live{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--orange)}
-.ambu-ldot{width:7px;height:7px;border-radius:50%;background:var(--orange);animation:blink 1.5s infinite}
-.ambu-body{padding:12px;display:flex;flex-direction:column;gap:8px}
-.ambu-unit{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg)}
-.ambu-ico{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--blue-l)}
-.ambu-info{flex:1}
-.ambu-id{font-size:12px;font-weight:600}
-.ambu-loc{font-size:10px;color:var(--txt2);margin-top:2px}
-.ambu-eta{font-size:12px;font-weight:600;margin-bottom:4px}
-.ambu-eta.ok{color:var(--green)}
-.ambu-eta.slow{color:var(--orange)}
-.disp-btn{padding:6px 12px;border-radius:var(--radius-sm);border:none;background:var(--orange);color:#fff;font-size:11px;font-weight:600;cursor:pointer;transition:.2s;font-family:var(--font)}
-.disp-btn:hover{background:#ca6f1e}
-.disp-btn.done{background:var(--green);cursor:default}
-
-/* MAP */
-.map-box{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-.map-area{position:relative;height:180px;background:#f0f4f0;border-radius:var(--radius-sm);overflow:hidden;margin-bottom:10px;border:1px solid var(--border)}
-.road-h{position:absolute;top:50%;left:0;right:0;height:2px;background:#d8d8d4;transform:translateY(-50%)}
-.road-v{position:absolute;left:42%;top:0;bottom:0;width:2px;background:#d8d8d4}
-.road-d{position:absolute;top:15%;left:0;right:0;height:1.5px;background:#d8d8d4;transform:rotate(6deg);transform-origin:left}
-.map-pin{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translateX(-50%)}
-.map-pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
-.map-pin-lbl{font-size:9px;font-weight:600;margin-top:3px;background:rgba(255,255,255,.9);padding:1px 4px;border-radius:3px;white-space:nowrap}
-.route-svg{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-.ambu-moving-pin{position:absolute;font-size:18px;animation:ambulanceMove 5s linear infinite}
-@keyframes ambulanceMove{0%{top:58%;left:52%}40%{top:22%;left:56%}100%{top:22%;left:56%}}
-.map-legend{display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--txt2)}
-.ml-i{display:flex;align-items:center;gap:4px}
-.ml-dot{width:8px;height:8px;border-radius:50%}
-
-/* REFERRAL MSG */
-.ref-msg-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.rmb-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--purple-l);border-bottom:1px solid #ddd}
-.rmb-title{font-size:13px;font-weight:600;color:#4a235a}
-.msg-pre{background:var(--bg);border:1px solid var(--border);border-left:3px solid var(--purple);border-radius:var(--radius-sm);padding:10px 12px;font-family:'Courier New',monospace;font-size:11px;line-height:1.8;color:var(--txt);white-space:pre-wrap;outline:none;margin-bottom:10px}
-.msg-meta{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px}
-.msg-meta-item{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:7px 10px}
-.mm-key{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.5px}
-.mm-val{font-size:12px;font-weight:500;margin-top:2px}
-.ref-btns{display:flex;gap:7px}
-
-/* TIMELINE */
-.timeline{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-.tl-item{display:flex;gap:12px;align-items:flex-start;padding-bottom:10px}
-.tl-item:last-child{padding-bottom:0}
-.tl-left{display:flex;flex-direction:column;align-items:center;gap:0}
-.tl-d{width:12px;height:12px;border-radius:50%;flex-shrink:0;margin-top:3px}
-.tl-line{width:1.5px;flex:1;min-height:18px;margin-top:2px}
-.tl-done-d{background:var(--green)}
-.tl-done-l{background:var(--green)}
-.tl-active-d{background:var(--orange);animation:blink 1.5s infinite}
-.tl-active-l{background:var(--border)}
-.tl-pend-d{background:var(--border)}
-.tl-pend-l{background:var(--border)}
-.tl-content{flex:1}
-.tl-label{font-size:13px;font-weight:500}
-.tl-time{font-size:11px;color:var(--txt3);margin-top:1px}
-
-/* HOW IT WORKS PANEL */
-</style>
-<div class="panel" id="panel-dispatch">
-  <div class="alert-bar">
-    <div class="alert-dot"></div>
-    <div class="alert-txt">Critical patient requires immediate referral — Ramesh Kumar (P-007) · Triage Score 11/20</div>
-    <div class="alert-time">10:34 AM</div>
-  </div>
-
-  <div class="grid-2" style="gap:16px;align-items:start">
-    <div style="display:flex;flex-direction:column;gap:14px">
-
-      <!-- Patient being referred -->
-      <div class="card">
-        <div class="card-header" style="background:var(--red-l)">
-          <div class="card-title" style="color:var(--red)">Patient being referred</div>
-          <span class="pill pill-red">🔴 Critical</span>
-        </div>
-        <div class="card-body">
-          <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-            <div style="width:40px;height:40px;border-radius:50%;background:var(--red-l);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--red);flex-shrink:0">RK</div>
-            <div>
-              <div style="font-size:14px;font-weight:600">Ramesh Kumar · 62y · Male</div>
-              <div style="font-size:11px;color:var(--txt2)">Barwani · Token P-007 · Score 11/20</div>
-            </div>
-          </div>
-          <div class="ai-brief" style="margin-bottom:12px">Suspected ACS / Cardiac event. SpO₂ 91%, BP 160/100, HR 112. Chest pain + breathlessness onset &lt;1hr. PHC cannot manage — immediate referral required.</div>
-          <div style="display:flex;gap:7px;flex-wrap:wrap">
-            <button class="btn btn-danger" onclick="triggerFull()">🏥 Book Bed + 🚑 Ambulance</button>
-            <button class="btn btn-warn" onclick="triggerAmbuOnly()">🚑 Ambulance Only</button>
-            <button class="btn btn-ghost btn-sm" onclick="triggerNotify()">📨 Notify Hospital</button>
-          </div>
-        </div>
+    <!-- === COMMAND CENTER === -->
+    <section class="panel" id="panel-dispatch">
+      <div class="alert-bar">
+        <div class="alert-dot"></div>
+        <div class="alert-txt">Critical patient requires immediate referral — Ramesh Kumar (P-007) · Triage Score 11/20</div>
+        <div class="alert-time">10:34 AM</div>
       </div>
 
-      <!-- Ambulance -->
-      <div class="ambu-section">
-        <div class="ambu-hd">
-          <div class="ambu-hd-title">108 Ambulance Network — Barwani Zone</div>
-          <div class="ambu-live"><div class="ambu-ldot"></div> 2 units available</div>
-        </div>
-        <div class="ambu-body">
-          <div class="ambu-unit">
-            <div class="ambu-ico">🚑</div>
-            <div class="ambu-info">
-              <div class="ambu-id">AMB-108-BW04 · Basic Life Support</div>
-              <div class="ambu-loc">Near Barwani bus stand · 1.4 km</div>
-            </div>
-            <div style="text-align:right">
-              <div class="ambu-eta ok">ETA 4 min</div>
-              <button class="disp-btn" id="a1-btn" onclick="dispatchAmbu(1)">Dispatch</button>
-            </div>
-          </div>
-          <div class="ambu-unit">
-            <div class="ambu-ico" style="background:var(--bg);border:1px solid var(--border)">🚑</div>
-            <div class="ambu-info">
-              <div class="ambu-id">AMB-108-BW07 · Advanced Life Support</div>
-              <div class="ambu-loc">Returning from Sendhwa · 8.2 km</div>
-            </div>
-            <div style="text-align:right">
-              <div class="ambu-eta slow">ETA 18 min</div>
-              <button class="disp-btn" id="a2-btn" onclick="dispatchAmbu(2)">Dispatch</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <div class="grid-2" style="gap:16px;align-items:start;">
+        <div style="display:flex;flex-direction:column;gap:14px;">
 
-      <!-- Map -->
-      <div class="map-box" style="padding: 10px;">
-        <div class="sec-label" style="margin-bottom:8px">Live route map (Real-time OpenStreetMap)</div>
-        <div id="osm-map" class="map-area" style="height: 220px; border-radius: var(--radius-sm); border: 1px solid var(--border); z-index: 1;">
-        </div>
-        <div class="map-legend" style="margin-top: 8px;">
-          <div class="ml-i"><div class="ml-dot" style="background:var(--red)"></div> PHC Barwani</div>
-          <div class="ml-i"><div class="ml-dot" style="background:var(--blue)"></div> Dist. Hospital</div>
-          <div class="ml-i">🚑 Live Ambulance</div>
-        </div>
-      </div>
-
-      <!-- Referral Status Timeline -->
-      <div class="timeline">
-        <div class="sec-label" style="margin-bottom:10px">Referral status timeline</div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-done-d"></div><div class="tl-line tl-done-l"></div></div>
-          <div class="tl-content"><div class="tl-label">Patient triaged — RED priority</div><div class="tl-time">10:31 AM · Auto-scored</div></div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-done-d"></div><div class="tl-line tl-done-l"></div></div>
-          <div class="tl-content"><div class="tl-label">Doctor reviewed patient brief</div><div class="tl-time">10:33 AM · Dr. A. Sharma</div></div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-active-d" id="tl-ref-dot"></div><div class="tl-line tl-active-l"></div></div>
-          <div class="tl-content"><div class="tl-label" id="tl-ref-lbl">Referral initiated — awaiting send</div><div class="tl-time" id="tl-ref-time">10:34 AM · Pending</div></div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-pend-d" id="tl-ambu-dot"></div><div class="tl-line tl-pend-l"></div></div>
-          <div class="tl-content"><div class="tl-label" id="tl-ambu-lbl">Ambulance dispatch</div><div class="tl-time" id="tl-ambu-time">Waiting</div></div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-pend-d" id="tl-bed-dot"></div><div class="tl-line tl-pend-l"></div></div>
-          <div class="tl-content"><div class="tl-label" id="tl-bed-lbl">Hospital bed confirmed</div><div class="tl-time" id="tl-bed-time">Waiting</div></div>
-        </div>
-        <div class="tl-item">
-          <div class="tl-left"><div class="tl-d tl-pend-d" id="tl-arr-dot"></div></div>
-          <div class="tl-content"><div class="tl-label">Patient arrives at hospital</div><div class="tl-time" id="tl-arr-time">ETA ~10:43 AM</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:14px">
-
-      <!-- Hospitals -->
-      <div>
-        <div class="sec-label">Nearest hospitals — live bed availability</div>
-        <div class="hosp-list" id="hosp-list">
-
-          <div class="h-card sel" id="hc1" onclick="selHosp('hc1','District Hospital Barwani')">
-            <div class="h-top">
-              <div class="h-rank r1">1</div>
-              <div class="h-name"><div class="h-name-title">District Hospital Barwani</div><div class="h-name-sub">4.2 km · ~9 min drive</div></div>
-              <span class="pill pill-green">6 beds free</span>
+          <div class="card">
+            <div class="card-header" style="background:var(--red-light);">
+              <div class="card-title" style="color:var(--red);">Patient being referred</div>
+              <span class="pill pill-red">🔴 Critical</span>
             </div>
-            <div class="h-detail" id="hc1-detail">
-              <div class="bed-bar-wrap">
-                <div class="bed-bar-top"><span>General beds</span><span>22/28</span></div>
-                <div class="bed-track"><div class="bed-fill" style="width:79%;background:var(--orange)"></div></div>
+            <div class="card-body">
+              <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;">
+                <div style="width:40px;height:40px;border-radius:50%;background:var(--red-light);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;">RK</div>
+                <div>
+                  <div style="font-size:14px;font-weight:600;">Ramesh Kumar · 62y · Male</div>
+                  <div style="font-size:11px;color:var(--text-muted);">Barwani · Token P-007 · Score 11/20</div>
+                </div>
               </div>
-              <div class="bed-bar-wrap">
-                <div class="bed-bar-top"><span>ICU beds</span><span>4/6</span></div>
-                <div class="bed-track"><div class="bed-fill" style="width:67%;background:var(--green)"></div></div>
-              </div>
-              <div class="h-row"><span class="k">Cardiologist on duty</span><span class="v ok">Yes — Dr. Mehra</span></div>
-              <div class="h-row"><span class="k">ECG / Lab</span><span class="v ok">Available now</span></div>
-              <div class="h-row"><span class="k">Blood bank</span><span class="v ok">Stocked</span></div>
-              <div class="h-row"><span class="k">Ambulance dock</span><span class="v ok">Open</span></div>
-              <div class="h-btns">
-                <button class="btn btn-primary btn-sm" style="flex:1" onclick="confirmBed('District Hospital Barwani')">Reserve ICU bed</button>
-                <button class="btn btn-ghost btn-sm" onclick="alert('Calling District Hospital Barwani ward...')">📞 Call ward</button>
+              <div class="ai-brief" style="margin-bottom:12px;">Suspected ACS / Cardiac event. SpO₂ 91%, BP 160/100, HR 112. Chest pain + breathlessness onset &lt;1hr. PHC cannot manage — immediate referral required.</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;">
+                <button class="btn btn-danger" onclick="triggerFull()">🏥 Book Bed + 🚑 Ambulance</button>
+                <button class="btn btn-warn" onclick="triggerAmbuOnly()">🚑 Ambulance Only</button>
+                <button class="btn btn-ghost btn-sm" onclick="triggerNotify()">📨 Notify Hospital</button>
               </div>
             </div>
           </div>
 
-          <div class="h-card" id="hc2" onclick="selHosp('hc2','CHC Sendhwa')">
-            <div class="h-top">
-              <div class="h-rank">2</div>
-              <div class="h-name"><div class="h-name-title">CHC Sendhwa</div><div class="h-name-sub">11.8 km · ~22 min</div></div>
-              <span class="pill pill-green">12 beds free</span>
+          <div class="ambu-section">
+            <div class="ambu-hd">
+              <div class="ambu-hd-title">108 Ambulance Network — Barwani Zone</div>
+              <div class="ambu-live"><div class="ambu-ldot"></div> 2 units available</div>
             </div>
-            <div class="h-detail" id="hc2-detail" style="display:none">
-              <div class="bed-bar-wrap">
-                <div class="bed-bar-top"><span>General beds</span><span>14/26</span></div>
-                <div class="bed-track"><div class="bed-fill" style="width:54%;background:var(--green)"></div></div>
+            <div class="ambu-body">
+              <div class="ambu-unit">
+                <div class="ambu-ico">🚑</div>
+                <div class="ambu-info">
+                  <div class="ambu-id">AMB-108-BW04 · Basic Life Support</div>
+                  <div class="ambu-loc">Near Barwani bus stand · 1.4 km</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="ambu-eta ok">ETA 4 min</div>
+                  <button class="disp-btn" id="a1-btn" onclick="dispatchAmbu(1)">Dispatch</button>
+                </div>
               </div>
-              <div class="h-row"><span class="k">Cardiologist</span><span class="v warn">No — General physician only</span></div>
-              <div class="h-row"><span class="k">ECG</span><span class="v ok">Available</span></div>
-              <div class="h-row"><span class="k">ICU</span><span class="v warn">None available</span></div>
-              <div class="h-btns">
-                <button class="btn btn-primary btn-sm" style="flex:1" onclick="confirmBed('CHC Sendhwa')">Reserve bed</button>
-                <button class="btn btn-ghost btn-sm" onclick="alert('Calling CHC Sendhwa...')">📞 Call</button>
+              <div class="ambu-unit">
+                <div class="ambu-ico" style="background:#F8FAFC;border:1px solid var(--border);">🚑</div>
+                <div class="ambu-info">
+                  <div class="ambu-id">AMB-108-BW07 · Advanced Life Support</div>
+                  <div class="ambu-loc">Returning from Sendhwa · 8.2 km</div>
+                </div>
+                <div style="text-align:right;">
+                  <div class="ambu-eta slow">ETA 18 min</div>
+                  <button class="disp-btn" id="a2-btn" onclick="dispatchAmbu(2)">Dispatch</button>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="h-card" id="hc3" onclick="selHosp('hc3','MCH Indore')">
-            <div class="h-top">
-              <div class="h-rank">3</div>
-              <div class="h-name"><div class="h-name-title">Medical College Hospital Indore</div><div class="h-name-sub">93 km · ~95 min</div></div>
-              <span class="pill pill-blue">Cath lab open</span>
+          <div style="background:#FFF;border:1px solid #E8E6E0;border-radius:12px;padding:10px;">
+            <div class="sec-label" style="margin-bottom:8px;">Live route map (OpenStreetMap)</div>
+            <div id="osm-map" style="height:220px;border-radius:8px;border:1px solid #E8E6E0;"></div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:10px;color:#6b6b68;margin-top:8px;">
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B;display:inline-block;"></span> PHC Barwani</span>
+              <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;border-radius:50%;background:#2980B9;display:inline-block;"></span> Dist. Hospital</span>
+              <span>🚑 Live Ambulance</span>
             </div>
-            <div class="h-detail" id="hc3-detail" style="display:none">
-              <div class="h-row"><span class="k">Cath lab</span><span class="v ok">Available now</span></div>
-              <div class="h-row"><span class="k">Cardiology ICU</span><span class="v ok">3 beds free</span></div>
-              <div class="h-row"><span class="k">Best for</span><span class="v">Post-stabilisation transfer</span></div>
-              <div class="h-btns">
-                <button class="btn btn-primary btn-sm" style="flex:1" onclick="confirmBed('MCH Indore')">Pre-book cath slot</button>
-                <button class="btn btn-ghost btn-sm" onclick="alert('Calling MCH Indore...')">📞 Call</button>
+          </div>
+
+          <div class="timeline">
+            <div class="sec-label" style="margin-bottom:10px;">Referral status timeline</div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-done-d"></div><div class="tl-line tl-done-l"></div></div><div class="tl-content"><div class="tl-label">Patient triaged — RED priority</div><div class="tl-time">10:31 AM · Auto-scored</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-done-d"></div><div class="tl-line tl-done-l"></div></div><div class="tl-content"><div class="tl-label">Doctor reviewed patient brief</div><div class="tl-time">10:33 AM · Dr. A. Sharma</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-active-d" id="tl-ref-dot"></div><div class="tl-line tl-active-l"></div></div><div class="tl-content"><div class="tl-label" id="tl-ref-lbl">Referral initiated — awaiting send</div><div class="tl-time" id="tl-ref-time">10:34 AM · Pending</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-pend-d" id="tl-ambu-dot"></div><div class="tl-line tl-pend-l"></div></div><div class="tl-content"><div class="tl-label" id="tl-ambu-lbl">Ambulance dispatch</div><div class="tl-time" id="tl-ambu-time">Waiting</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-pend-d" id="tl-bed-dot"></div><div class="tl-line tl-pend-l"></div></div><div class="tl-content"><div class="tl-label" id="tl-bed-lbl">Hospital bed confirmed</div><div class="tl-time" id="tl-bed-time">Waiting</div></div></div>
+            <div class="tl-item"><div class="tl-left"><div class="tl-d tl-pend-d" id="tl-arr-dot"></div></div><div class="tl-content"><div class="tl-label">Patient arrives at hospital</div><div class="tl-time" id="tl-arr-time">ETA ~10:43 AM</div></div></div>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div>
+            <div class="sec-label">Nearest hospitals — live bed availability</div>
+            <div id="hosp-list">
+              <div class="h-card sel" id="hc1" onclick="selHosp('hc1','District Hospital Barwani')">
+                <div class="h-top">
+                  <div class="h-rank r1">1</div>
+                  <div class="h-name"><div class="h-name-title">District Hospital Barwani</div><div class="h-name-sub">4.2 km · ~9 min drive</div></div>
+                  <span class="pill pill-green">6 beds free</span>
+                </div>
+                <div class="h-detail" id="hc1-detail">
+                  <div class="bed-bar-wrap"><div class="bed-bar-top"><span>General beds</span><span>22/28</span></div><div class="bed-track"><div class="bed-fill" style="width:79%;background:#E67E22;"></div></div></div>
+                  <div class="bed-bar-wrap"><div class="bed-bar-top"><span>ICU beds</span><span>4/6</span></div><div class="bed-track"><div class="bed-fill" style="width:67%;background:#1A6B48;"></div></div></div>
+                  <div class="h-row"><span class="k">Cardiologist on duty</span><span class="v ok">Yes — Dr. Mehra</span></div>
+                  <div class="h-row"><span class="k">ECG / Lab</span><span class="v ok">Available now</span></div>
+                  <div class="h-row"><span class="k">Blood bank</span><span class="v ok">Stocked</span></div>
+                  <div class="h-btns">
+                    <button class="btn btn-primary btn-sm" style="flex:1;" onclick="confirmBed('District Hospital Barwani')">Reserve ICU bed</button>
+                    <button class="btn btn-ghost btn-sm" onclick="alert('Calling ward...')">📞 Call ward</button>
+                  </div>
+                </div>
+              </div>
+              <div class="h-card" id="hc2" onclick="selHosp('hc2','CHC Sendhwa')">
+                <div class="h-top"><div class="h-rank">2</div><div class="h-name"><div class="h-name-title">CHC Sendhwa</div><div class="h-name-sub">11.8 km · ~22 min</div></div><span class="pill pill-green">12 beds free</span></div>
+                <div class="h-detail" id="hc2-detail" style="display:none;">
+                  <div class="bed-bar-wrap"><div class="bed-bar-top"><span>General beds</span><span>14/26</span></div><div class="bed-track"><div class="bed-fill" style="width:54%;background:#1A6B48;"></div></div></div>
+                  <div class="h-row"><span class="k">Cardiologist</span><span class="v warn">No — General physician only</span></div>
+                  <div class="h-row"><span class="k">ICU</span><span class="v warn">None available</span></div>
+                  <div class="h-btns"><button class="btn btn-primary btn-sm" style="flex:1;" onclick="confirmBed('CHC Sendhwa')">Reserve bed</button><button class="btn btn-ghost btn-sm">📞 Call</button></div>
+                </div>
+              </div>
+              <div class="h-card" id="hc3" onclick="selHosp('hc3','MCH Indore')">
+                <div class="h-top"><div class="h-rank">3</div><div class="h-name"><div class="h-name-title">Medical College Hospital Indore</div><div class="h-name-sub">93 km · ~95 min</div></div><span class="pill pill-blue">Cath lab open</span></div>
+                <div class="h-detail" id="hc3-detail" style="display:none;">
+                  <div class="h-row"><span class="k">Cath lab</span><span class="v ok">Available now</span></div>
+                  <div class="h-row"><span class="k">Cardiology ICU</span><span class="v ok">3 beds free</span></div>
+                  <div class="h-btns"><button class="btn btn-primary btn-sm" style="flex:1;" onclick="confirmBed('MCH Indore')">Pre-book cath slot</button><button class="btn btn-ghost btn-sm">📞 Call</button></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Referral Message -->
-      <div class="ref-msg-box">
-        <div class="rmb-hd">
-          <div class="rmb-title">Auto-generated referral notice</div>
-          <span class="pill pill-purple" id="ref-status">Draft</span>
-        </div>
-        <div class="card-body">
-          <div class="msg-pre" id="ref-msg" contenteditable="false">REFERRAL NOTICE — PHC Barwani
+          <div class="ref-msg-box">
+            <div class="rmb-hd"><div class="rmb-title">Auto-generated referral notice</div><span class="pill pill-purple" id="ref-status">Draft</span></div>
+            <div class="card-body">
+              <div class="msg-pre" id="ref-msg" contenteditable="false">REFERRAL NOTICE — PHC Barwani
 Patient: Ramesh Kumar, 62M
 Token: P-007 | Triage Score: 11/20 (RED)
 Chief complaint: Chest pain + Breathlessness
@@ -914,255 +891,461 @@ Referring doctor: Dr. A. Sharma
 ETA to hospital: ~9 min (AMB-108-BW04)
 Requires: ICU bed, ECG, Cardiology review
 PHC contact: +91-732-XXXXXX</div>
-          <div class="msg-meta">
-            <div class="msg-meta-item"><div class="mm-key">Sending to</div><div class="mm-val" id="mm-to">District Hospital Barwani</div></div>
-            <div class="msg-meta-item"><div class="mm-key">Channel</div><div class="mm-val">SMS + NIC eReferral</div></div>
-            <div class="msg-meta-item"><div class="mm-key">Ambulance</div><div class="mm-val" id="mm-ambu">Not dispatched</div></div>
-            <div class="msg-meta-item"><div class="mm-key">Bed status</div><div class="mm-val" id="mm-bed">Pending confirmation</div></div>
-          </div>
-          <div class="ref-btns">
-            <button class="btn btn-primary" style="flex:1" onclick="sendReferral()">Send referral + notify hospital</button>
-            <button class="btn btn-ghost btn-sm" onclick="editMsg()">✏️ Edit</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-// ── REFERRAL ──
-let selHospId='hc1';
-function selHosp(id,name){
-  document.querySelectorAll('.h-card').forEach(c=>c.classList.remove('sel'));
-  document.getElementById(id).classList.add('sel');
-  ['hc1','hc2','hc3'].forEach(h=>{
-    const det=document.getElementById(h+'-detail');
-    if(det)det.style.display=h===id?'block':'none';
-  });
-  selHospId=id;
-  document.getElementById('mm-to').textContent=name;
-}
-function dispatchAmbu(n){
-  const btn=document.getElementById('a'+n+'-btn');
-  btn.textContent='Dispatched ✓';btn.classList.add('done');btn.disabled=true;
-  document.getElementById('mm-ambu').textContent=n===1?'AMB-BW04 (ETA 4 min)':'AMB-BW07 (ETA 18 min)';
-  document.getElementById('tl-ambu-dot').className='tl-d tl-done-d';
-  document.getElementById('tl-ambu-lbl').textContent='Ambulance dispatched — AMB-108-BW0'+[null,'4','7'][n];
-  document.getElementById('tl-ambu-time').textContent='Just now';
-}
-function confirmBed(name){
-  document.getElementById('mm-bed').textContent='Reserved · '+name;
-  document.getElementById('tl-bed-dot').className='tl-d tl-done-d';
-  document.getElementById('tl-bed-lbl').textContent='Bed reserved — '+name;
-  document.getElementById('tl-bed-time').textContent='Just now · Auto-confirmed';
-}
-function sendReferral(){
-  const el=document.getElementById('ref-status');
-  el.textContent='Sent ✓';el.className='pill pill-green';
-  document.getElementById('tl-ref-dot').className='tl-d tl-done-d';
-  document.getElementById('tl-ref-lbl').textContent='Referral sent — hospital notified';
-  document.getElementById('tl-ref-time').textContent='Just now · SMS + eReferral';
-}
-function triggerFull(){dispatchAmbu(1);setTimeout(()=>confirmBed('District Hospital Barwani'),300);setTimeout(()=>sendReferral(),600);}
-function triggerAmbuOnly(){dispatchAmbu(1);}
-function triggerNotify(){sendReferral();}
-function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable='true';m.focus();m.style.borderLeftColor='var(--purple)';}
-
-
-</script>
-
-<style>
-#panel-about {
-  --green:#1A6B48;--green-l:#D5F5E3;--green-d:#0d4a32;
-  --red:#C0392B;--red-l:#FADBD8;
-  --orange:#E67E22;--orange-l:#FDEBD0;
-  --blue:#2980B9;--blue-l:#D6EAF8;
-  --purple:#6C3483;--purple-l:#E8DAEF;
-  --bg:#FAFAF8;--card:#FFFFFF;
-  --border:#E8E6E0;
-  --txt2:#6b6b68;--txt3:#9a9a96;
-  --radius:12px;--radius-sm:8px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
-}
-/* HOW IT WORKS PANEL */
-.flow-step{display:flex;gap:14px;align-items:flex-start;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-.flow-num{width:32px;height:32px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
-.flow-title{font-size:13px;font-weight:600;margin-bottom:3px}
-.flow-desc{font-size:12px;color:var(--txt2);line-height:1.7}
-.score-table{width:100%;border-collapse:collapse;font-size:12px}
-.score-table th{background:var(--bg);padding:8px 10px;text-align:left;font-weight:600;font-size:11px;color:var(--txt2);border-bottom:1px solid var(--border)}
-.score-table td{padding:8px 10px;border-bottom:1px solid var(--border)}
-.score-table tr:last-child td{border-bottom:none}
-
-</style>
-<!-- ===== HOW IT WORKS ===== -->
-<div class="panel" id="panel-about">
-  <div class="grid-2" style="gap:14px;margin-bottom:14px">
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <div class="sec-label">Patient journey</div>
-      <div class="flow-step"><div class="flow-num">1</div><div><div class="flow-title">Patient registers (any channel)</div><div class="flow-desc">Web form, USSD *599# on keypad phone, SMS/WhatsApp chatbot, or via ASHA worker at clinic kiosk. No smartphone or internet needed for USSD/SMS.</div></div></div>
-      <div class="flow-step"><div class="flow-num">2</div><div><div class="flow-title">Symptom questionnaire</div><div class="flow-desc">5–10 structured questions about symptoms, severity (1–5 scale), and duration. Multilingual — Hindi and English.</div></div></div>
-      <div class="flow-step"><div class="flow-num">3</div><div><div class="flow-title">Auto triage & scoring</div><div class="flow-desc">START-inspired algorithm scores each patient in under 1 second. Critical symptoms score +4, moderate +2, mild +1. Age multiplier applied for elderly / children.</div></div></div>
-      <div class="flow-step"><div class="flow-num">4</div><div><div class="flow-title">Token issued, queue updated</div><div class="flow-desc">Patient gets a queue token with estimated wait time. Doctor queue reorders automatically by severity score. SMS / WhatsApp notification sent.</div></div></div>
-      <div class="flow-step"><div class="flow-num">5</div><div><div class="flow-title">Doctor sees structured brief</div><div class="flow-desc">Before the teleconsultation, doctor sees vitals, symptoms, triage score, and a 3-sentence AI brief. No need to ask basic questions again.</div></div></div>
-      <div class="flow-step"><div class="flow-num">6</div><div><div class="flow-title">Referral & dispatch (if needed)</div><div class="flow-desc">For critical patients: doctor one-taps to reserve a bed at the nearest suitable hospital, dispatch 108 ambulance, and send auto-generated referral notice — all simultaneously.</div></div></div>
-    </div>
-
-    <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="card">
-        <div class="card-header"><div class="card-title">Triage scoring algorithm</div></div>
-        <div class="card-body">
-          <table class="score-table">
-            <tr><th>Symptom / Factor</th><th>Score</th></tr>
-            <tr><td>Chest pain / Breathlessness / Seizure</td><td><span class="pill pill-red">+4 each</span></td></tr>
-            <tr><td>High fever / Severe headache / Injury</td><td><span class="pill pill-orange">+2 each</span></td></tr>
-            <tr><td>Vomiting / Abdominal pain / Cold</td><td><span class="pill pill-green">+1 each</span></td></tr>
-            <tr><td>Age &gt;60 or &lt;5 years</td><td><span class="pill pill-blue">×1.5 multiplier</span></td></tr>
-            <tr><td>Patient-reported severity</td><td><span class="pill pill-blue">+1 to +5</span></td></tr>
-          </table>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px">
-            <div style="background:var(--red-l);border-radius:var(--radius-sm);padding:10px;text-align:center"><div style="font-weight:700;color:var(--red);font-size:15px">≥ 8</div><div style="font-size:10px;color:var(--red);margin-top:3px">🔴 RED<br>Critical<br>See immediately</div></div>
-            <div style="background:var(--orange-l);border-radius:var(--radius-sm);padding:10px;text-align:center"><div style="font-weight:700;color:var(--orange);font-size:15px">4–7</div><div style="font-size:10px;color:var(--orange);margin-top:3px">🟠 ORANGE<br>Moderate<br>Within 30 min</div></div>
-            <div style="background:var(--green-l);border-radius:var(--radius-sm);padding:10px;text-align:center"><div style="font-weight:700;color:var(--green);font-size:15px">1–3</div><div style="font-size:10px;color:var(--green);margin-top:3px">🟢 GREEN<br>Mild<br>Normal queue</div></div>
+              <div class="msg-meta">
+                <div class="msg-meta-item"><div class="mm-key">Sending to</div><div class="mm-val" id="mm-to">District Hospital Barwani</div></div>
+                <div class="msg-meta-item"><div class="mm-key">Channel</div><div class="mm-val">SMS + NIC eReferral</div></div>
+                <div class="msg-meta-item"><div class="mm-key">Ambulance</div><div class="mm-val" id="mm-ambu">Not dispatched</div></div>
+                <div class="msg-meta-item"><div class="mm-key">Bed status</div><div class="mm-val" id="mm-bed">Pending confirmation</div></div>
+              </div>
+              <div class="ref-btns">
+                <button class="btn btn-primary" style="flex:1;" onclick="sendReferral()">Send referral + notify hospital</button>
+                <button class="btn btn-ghost btn-sm" onclick="editMsg()">✏️ Edit</button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Access channels at a glance</div></div>
-        <div class="card-body" style="display:flex;flex-direction:column;gap:8px;font-size:12px">
-          <div style="display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:18px">📟</span><div><div style="font-weight:600">USSD *599#</div><div style="color:var(--txt2)">Any 2G phone · No internet · No literacy needed</div></div></div>
-          <div style="display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:18px">💬</span><div><div style="font-weight:600">SMS / WhatsApp</div><div style="color:var(--txt2)">Hindi + English · Works on basic phones</div></div></div>
-          <div style="display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:18px">🌐</span><div><div style="font-weight:600">Web / App</div><div style="color:var(--txt2)">Smartphone or shared clinic tablet</div></div></div>
-          <div style="display:flex;gap:10px;align-items:center;padding:8px;background:var(--bg);border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:18px">🏥</span><div><div style="font-weight:600">Clinic Kiosk (ASHA / ANM)</div><div style="color:var(--txt2)">Health worker registers on behalf of patient</div></div></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-header"><div class="card-title">Referral & dispatch features</div></div>
-        <div class="card-body" style="font-size:12px;color:var(--txt2);line-height:2.2">
-          ✅ Nearest hospital ranked by distance + bed availability + specialist match<br>
-          ✅ Real-time ICU / general bed count from hospital API<br>
-          ✅ 108 ambulance dispatch integrated (nearest unit auto-suggested)<br>
-          ✅ Auto-generated referral notice — SMS + NIC eReferral portal<br>
-          ✅ Live status timeline — doctor and hospital both see same state<br>
-          ✅ One-tap workflow — entire referral chain under 10 seconds
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    </section>
 
+    <!-- === HOW IT WORKS === -->
+    <section class="panel" id="panel-about">
+      <div class="grid-2" style="gap:14px;margin-bottom:14px;">
+        <div>
+          <div class="sec-label">Patient journey</div>
+          <div class="flow-step"><div class="flow-num">1</div><div><div class="flow-title">Patient registers (any channel)</div><div class="flow-desc">Web form, USSD *599# on keypad phone, SMS/WhatsApp chatbot, or via ASHA worker. No smartphone needed for USSD/SMS. Works fully offline with local queue storage.</div></div></div>
+          <div class="flow-step"><div class="flow-num">2</div><div><div class="flow-title">Symptom questionnaire</div><div class="flow-desc">5–10 structured questions about symptoms, severity (1–5 scale), and duration. Multilingual — Hindi and English, plus 3 regional languages.</div></div></div>
+          <div class="flow-step"><div class="flow-num">3</div><div><div class="flow-title">Auto triage & scoring</div><div class="flow-desc">START-inspired algorithm scores each patient in under 1 second. Critical symptoms score +4, moderate +2, mild +1. Age multiplier applied for elderly/children.</div></div></div>
+          <div class="flow-step"><div class="flow-num">4</div><div><div class="flow-title">Token issued, queue updated</div><div class="flow-desc">Patient gets a queue token with estimated wait time. Doctor queue reorders automatically by severity score. Saved locally if offline, synced when reconnected.</div></div></div>
+          <div class="flow-step" style="background: #FFF7ED; border-color: #FDE68A;"><div class="flow-num" style="background: #D97706;">5</div><div><div class="flow-title">RED patient escalation protocol</div><div class="flow-desc"><strong>2 min:</strong> If no doctor response, alert backup doctor + ASHA worker via SMS. <strong>5 min:</strong> Auto-trigger ambulance dispatch + referral to nearest hospital. Timer visible on queue card.</div></div></div>
+          <div class="flow-step"><div class="flow-num">6</div><div><div class="flow-title">Referral & dispatch (if needed)</div><div class="flow-desc">Doctor one-taps to reserve a bed, dispatch ambulance, and send auto-generated referral — simultaneously. Full status timeline visible to both doctor and hospital.</div></div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Triage scoring algorithm</div></div>
+            <div class="card-body">
+              <table class="score-table">
+                <tr><th>Symptom / Factor</th><th>Score</th></tr>
+                <tr><td>Chest pain / Breathlessness / Seizure</td><td><span class="pill pill-red">+4 each</span></td></tr>
+                <tr><td>High fever / Severe headache / Injury</td><td><span class="pill pill-orange">+2 each</span></td></tr>
+                <tr><td>Vomiting / Abdominal pain / Cold</td><td><span class="pill pill-green">+1 each</span></td></tr>
+                <tr><td>Age &gt;60 or &lt;5 years</td><td><span class="pill pill-blue">×1.5 multiplier</span></td></tr>
+                <tr><td>Patient-reported severity</td><td><span class="pill pill-blue">+1 to +5</span></td></tr>
+              </table>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px;">
+                <div style="background:var(--red-light);border-radius:8px;padding:10px;text-align:center;"><div style="font-weight:700;color:var(--red-dark);font-size:15px;">≥ 8</div><div style="font-size:10px;color:var(--red-dark);margin-top:3px;">🔴 RED<br>Critical</div></div>
+                <div style="background:var(--orange-light);border-radius:8px;padding:10px;text-align:center;"><div style="font-weight:700;color:var(--orange-dark);font-size:15px;">4–7</div><div style="font-size:10px;color:var(--orange-dark);margin-top:3px;">🟠 ORANGE<br>Moderate</div></div>
+                <div style="background:var(--primary-light);border-radius:8px;padding:10px;text-align:center;"><div style="font-weight:700;color:var(--primary-dark);font-size:15px;">1–3</div><div style="font-size:10px;color:var(--primary-dark);margin-top:3px;">🟢 GREEN<br>Mild</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Offline & Sync Architecture</div></div>
+            <!-- Issues Solved       @gurvekartik6       -->
+            <!-- <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:2.2;">
+              ✅ IndexedDB stores all patient registrations locally<br>
+              ✅ Works without any internet connection<br>
+              ✅ Auto-detects reconnection and syncs pending queue<br>
+              ✅ Sync status badge on every patient card<br>
+              ✅ USSD flow queues are batched and synced via SMS<br>
+              ✅ Conflict resolution: server timestamp wins<br>
+              ✅ Conflict error get solved 
+            </div> -->
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">RED Escalation Protocol</div></div>
+            <!-- Issues Solved      @gurvekartik6      -->
+            <!-- <div class="card-body" style="font-size:12px;color:var(--text-muted);line-height:2.2;">
+              ✅ Timer starts the moment RED patient joins queue<br>
+              ✅ 2-min countdown shown live on doctor dashboard<br>
+              ✅ 2 min → SMS to backup doctor + ASHA worker<br>
+              ✅ 5 min → auto-dispatch nearest 108 ambulance<br>
+              ✅ 5 min → send auto-referral to District Hospital<br>
+              ✅ Toast notification in-app for all escalations<br>
+              ✅ All escalation events logged with timestamps
+            </div> -->
+          </div>
+        </div>
+      </div>
+    </section>
 
   </main>
 
-  <!-- Notification Modal -->
+  <!-- Modals -->
   <div class="modal-overlay" id="sys-modal">
     <div class="modal-content">
       <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
       <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Dispatch Confirmed</h2>
-      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">Ambulance 108 AMB-BW04 has been dispatched. District Hospital Barwani ICU bed reserved. Referral slip sent via NIC portal.</p>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">Ambulance 108 AMB-BW04 dispatched. District Hospital Barwani ICU bed reserved. Referral sent via NIC portal.</p>
       <button class="btn btn-primary btn-full" onclick="document.getElementById('sys-modal').classList.remove('active')">Close</button>
     </div>
   </div>
 
-  <!-- Auth Modal -->
   <div class="auth-overlay" id="auth-modal">
     <div class="auth-content">
-      <div class="auth-header">
-        <div style="font-size: 40px; margin-bottom: 12px;">🔒</div>
-        <h2 class="auth-title">Restricted Access</h2>
-        <p class="auth-sub" id="auth-prompt">Please sign in to access this module.</p>
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:40px;margin-bottom:12px;">🔒</div>
+        <h2 style="font-size:24px;font-weight:800;margin-bottom:8px;">Restricted Access</h2>
+        <p style="font-size:14px;color:var(--text-muted);" id="auth-prompt">Please sign in to access this module.</p>
       </div>
       <div class="auth-error" id="auth-error">Invalid Username or Password</div>
       <form id="auth-form" onsubmit="event.preventDefault(); handleLogin();">
-        <div class="input-grp">
-          <label class="input-label">Username</label>
-          <input type="text" id="auth-user" class="input-field" placeholder="doctor or admin" required>
-        </div>
-        <div class="input-grp">
-          <label class="input-label">Password</label>
-          <input type="password" id="auth-pass" class="input-field" placeholder="••••••••" required>
-        </div>
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
-          <button type="button" class="btn btn-outline" style="flex: 1;" onclick="cancelLogin()">Cancel</button>
-          <button type="submit" class="btn btn-primary" style="flex: 1;">Access</button>
+        <div class="input-grp"><label class="input-label">Username</label><input type="text" id="auth-user" class="input-field" placeholder="doctor" required></div>
+        <div class="input-grp"><label class="input-label">Password</label><input type="password" id="auth-pass" class="input-field" placeholder="••••••••" required></div>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+          <button type="button" class="btn btn-outline" style="flex:1;" onclick="cancelLogin()">Cancel</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;">Access</button>
         </div>
       </form>
-      <div style="margin-top:20px; font-size:12px; color:var(--text-muted); text-align:center; line-height: 1.6;">
-        <b>Hint:</b><br>
-        Doctor Dashboard: doctor / doctor123
+      <div style="margin-top:20px;font-size:12px;color:var(--text-muted);text-align:center;line-height:1.6;">
+        <b>Hint:</b> doctor / doctor123
       </div>
     </div>
   </div>
 
-  <!-- Video Consult Modal -->
   <div class="modal-overlay" id="video-call-modal">
     <div class="video-modal">
       <div class="video-header">
-        <div style="font-weight: 600; display: flex; align-items: center; gap: 8px;">
-          <span style="width: 8px; height: 8px; background: var(--red); border-radius: 50%; display: inline-block;"></span>
-          Secure Teleconsultation
-        </div>
-        <div id="video-patient-name" style="color: #94A3B8;">Connecting...</div>
+        <div style="font-weight:600;display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span>Secure Teleconsultation</div>
+        <div id="video-patient-name" style="color:#94A3B8;">Connecting...</div>
       </div>
-      <div class="video-main-feed">
-        <div class="pulse-text" id="video-status-text">Establishing E2E Connection to Patient...</div>
-      </div>
-      <div class="video-pip">
-        Doctor Camera Feed
-      </div>
+      <div class="video-main-feed"><div class="pulse-text" id="video-status-text">Establishing E2E Connection...</div></div>
+      <div class="video-pip">Doctor Camera Feed</div>
       <div class="video-controls">
-        <button class="ctrl-btn" onclick="this.style.background = this.style.background==='var(--red)'?'':'var(--red)'">🎤</button>
-        <button class="ctrl-btn" onclick="this.style.background = this.style.background==='var(--red)'?'':'var(--red)'">📷</button>
-        <button class="ctrl-btn danger" style="border-radius: 100px; width: auto; padding: 0 24px; font-weight: 700; font-family: var(--font-ui);" onclick="endVideoCall()">End Call</button>
+        <button class="ctrl-btn" onclick="this.style.background=this.style.background==='#E11D48'?'#334155':'#E11D48'">🎤</button>
+        <button class="ctrl-btn" onclick="this.style.background=this.style.background==='#E11D48'?'#334155':'#E11D48'">📷</button>
+        <button class="ctrl-btn danger" style="border-radius:100px;width:auto;padding:0 24px;font-weight:700;" onclick="endVideoCall()">End Call</button>
       </div>
     </div>
   </div>
 
-  <!-- Message Patient Modal -->
   <div class="modal-overlay" id="message-modal">
     <div class="msg-modal">
       <div class="msg-header">
-        <div>
-          <div style="font-size: 16px; font-weight: 700; color: var(--text-main);" id="msg-patient-name">Patient</div>
-          <div style="font-size: 12px; color: var(--primary); font-weight: 600;">Online</div>
-        </div>
-        <button style="border: none; background: transparent; cursor: pointer; font-size: 20px;" onclick="closeMessageModal()">✕</button>
+        <div><div style="font-size:16px;font-weight:700;" id="msg-patient-name">Patient</div><div style="font-size:12px;color:var(--primary);font-weight:600;">Online</div></div>
+        <button style="border:none;background:transparent;cursor:pointer;font-size:20px;" onclick="closeMessageModal()">✕</button>
       </div>
       <div class="msg-body" id="msg-body">
-        <div class="chat-bubble chat-left" style="background: var(--blue-light); color: var(--blue-dark); width: 100%; max-width: 100%; text-align: center; border-radius: 8px;">Automated Swasthya Bot:<br>Triage details securely logged.</div>
+        <div class="chat-bubble chat-left" style="background:var(--blue-light);color:var(--blue-dark);width:100%;max-width:100%;text-align:center;border-radius:8px;">Swasthya Bot: Triage details securely logged.</div>
       </div>
       <div class="msg-footer">
-        <input type="text" id="msg-input" class="input-field" placeholder="Type a message..." style="margin-bottom: 0; flex: 1;">
+        <input type="text" id="msg-input" class="input-field" placeholder="Type a message..." style="margin-bottom:0;flex:1;">
         <button class="btn btn-primary" onclick="sendMessage()">Send</button>
       </div>
     </div>
   </div>
 
   <script>
-    /* =========================================================
-       API System Mock Engine 
-       Simulates seamless backend operation
-       ========================================================= */
+    /* ============================================================
+       OFFLINE PWA ENGINE — IndexedDB Storage + Network Detection
+       ============================================================ */
+
+    const DB_NAME = 'swasthya_queue';
+    const DB_VERSION = 1;
+    let db = null;
+    let isOnline = navigator.onLine;
+
+    // Initialize IndexedDB
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const d = e.target.result;
+          if (!d.objectStoreNames.contains('patients')) {
+            const store = d.createObjectStore('patients', { keyPath: 'id' });
+            store.createIndex('synced', 'synced', { unique: false });
+            store.createIndex('priority', 'priority', { unique: false });
+          }
+          if (!d.objectStoreNames.contains('escalations')) {
+            d.createObjectStore('escalations', { keyPath: 'patientId' });
+          }
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    // Save patient to IndexedDB
+    function savePatientLocal(patient) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('patients', 'readwrite');
+        const store = tx.objectStore('patients');
+        store.put(patient);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    // Get all patients from IndexedDB
+    function getAllPatientsLocal() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('patients', 'readonly');
+        const store = tx.objectStore('patients');
+        const req = store.getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // Get pending (unsynced) patients
+    function getPendingPatients() {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('patients', 'readonly');
+        const store = tx.objectStore('patients');
+        const idx = store.index('synced');
+        const req = idx.getAll(IDBKeyRange.only(false));
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    // Mark patient as synced
+    function markSynced(patientId) {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('patients', 'readwrite');
+        const store = tx.objectStore('patients');
+        const req = store.get(patientId);
+        req.onsuccess = () => {
+          const p = req.result;
+          if (p) { p.synced = true; store.put(p); }
+          resolve();
+        };
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    /* ============================================================
+       NETWORK DETECTION & AUTO-SYNC
+       ============================================================ */
+    function updateNetworkUI(online) {
+      isOnline = online;
+      const banner = document.getElementById('offline-banner');
+      const dot = document.querySelector('.offline-dot');
+      const msg = document.getElementById('offline-msg');
+      const connDot = document.getElementById('conn-dot');
+      const connLabel = document.getElementById('conn-label');
+
+      if (!online) {
+        banner.className = 'show';
+        dot.style.background = '#F87171';
+        msg.textContent = '📴 Offline mode — patients saved locally to device';
+        if (connDot) { connDot.style.background = '#F87171'; connLabel.textContent = 'Offline'; connLabel.style.color = 'var(--red-dark)'; }
+      } else {
+        banner.className = 'show online';
+        dot.style.background = '#6EE7B7';
+        msg.textContent = '✅ Back online — syncing queued patients...';
+        if (connDot) { connDot.style.background = 'var(--primary)'; connLabel.textContent = 'Online'; connLabel.style.color = 'var(--primary-dark)'; }
+        setTimeout(() => autoSync(), 500);
+        setTimeout(() => { banner.className = ''; }, 4000);
+      }
+    }
+
+    async function autoSync() {
+      try {
+        const pending = await getPendingPatients();
+        const countEl = document.getElementById('sync-count');
+        if (pending.length === 0) { updatePendingUI(); return; }
+
+        // Show sync count in banner
+        countEl.style.display = 'inline';
+        countEl.textContent = `Syncing ${pending.length} patient${pending.length > 1 ? 's' : ''}...`;
+
+        // Simulate server sync (replace with actual API call)
+        for (const p of pending) {
+          await new Promise(r => setTimeout(r, 300)); // simulate per-record upload
+          await markSynced(p.id);
+        }
+
+        countEl.textContent = `${pending.length} synced ✓`;
+        setTimeout(() => { countEl.style.display = 'none'; }, 2000);
+        updatePendingUI();
+        loadQueue(); // refresh doctor queue
+      } catch (e) {
+        console.error('Sync error:', e);
+      }
+    }
+
+    async function manualSync() {
+      if (!isOnline) { alert('Still offline. Connect to internet to sync.'); return; }
+      await autoSync();
+    }
+
+    async function updatePendingUI() {
+      try {
+        const pending = await getPendingPatients();
+        const n = pending.length;
+        const el = document.getElementById('pending-label');
+        const dash = document.getElementById('sync-count-dash');
+        const dashLabel = document.getElementById('sync-dash-label');
+        if (el) el.textContent = n === 0 ? '✓ All patients synced' : `${n} patient${n > 1 ? 's' : ''} pending sync`;
+        if (dash) { dash.textContent = n; dashLabel.textContent = n === 0 ? 'All synced ✓' : 'Pending upload'; }
+      } catch(e) {}
+    }
+
+    window.addEventListener('online', () => updateNetworkUI(true));
+    window.addEventListener('offline', () => updateNetworkUI(false));
+
+    /* ============================================================
+       RED PATIENT ESCALATION SYSTEM
+       ============================================================ */
+    const escalations = {}; // patientId -> { timer2, timer5, startTime, cancelled }
+
+    function startEscalation(patient) {
+      if (patient.priority !== 'RED') return;
+      if (escalations[patient.id]) return; // already running
+
+      const startTime = Date.now();
+      escalations[patient.id] = { startTime, cancelled: false };
+
+      // 2-minute: alert backup doctor + ASHA
+      const t2 = setTimeout(() => {
+        if (escalations[patient.id]?.cancelled) return;
+        fireEscalation2min(patient);
+      }, 2 * 60 * 1000); // 2 min (use 15000 for demo = 15s)
+
+      // 5-minute: auto-dispatch
+      const t5 = setTimeout(() => {
+        if (escalations[patient.id]?.cancelled) return;
+        fireEscalation5min(patient);
+      }, 5 * 60 * 1000); // 5 min (use 30000 for demo = 30s)
+
+      escalations[patient.id].t2 = t2;
+      escalations[patient.id].t5 = t5;
+
+      // For demo purposes, trigger at 15s and 30s
+      // Comment out above and uncomment below for demo:
+      // setTimeout(() => { if (!escalations[patient.id]?.cancelled) fireEscalation2min(patient); }, 15000);
+      // setTimeout(() => { if (!escalations[patient.id]?.cancelled) fireEscalation5min(patient); }, 30000);
+
+      updateEscalationTimerOnCard(patient);
+    }
+
+    function cancelEscalation(patientId) {
+      if (escalations[patientId]) {
+        escalations[patientId].cancelled = true;
+        clearTimeout(escalations[patientId].t2);
+        clearTimeout(escalations[patientId].t5);
+      }
+    }
+
+    function fireEscalation2min(patient) {
+      showEscalationToast({
+        level: '2min',
+        title: '⚠️ RED Patient — No Response (2 min)',
+        body: `${patient.name} (${patient.id}) has had no doctor response for 2 minutes. Backup doctor Dr. B. Patel + ASHA worker Geeta Devi notified via SMS.`,
+        actions: [
+          { label: 'Attend Now', style: 'esc-btn-red', action: () => cancelEscalation(patient.id) },
+          { label: 'Auto-refer in 3 min', style: 'esc-btn-outline', action: () => {} }
+        ],
+        duration: 180 // 3 more minutes until auto-dispatch
+      });
+      logEscalation(patient.id, '2min', 'Backup doctor + ASHA notified via SMS');
+    }
+
+    function fireEscalation5min(patient) {
+      showEscalationToast({
+        level: '5min',
+        title: '🚨 AUTO-DISPATCH TRIGGERED (5 min)',
+        body: `${patient.name} still unattended. Ambulance AMB-108-BW04 dispatched automatically. Referral sent to District Hospital Barwani.`,
+        actions: [
+          { label: 'View Dispatch', style: 'esc-btn-red', action: () => switchTab('dispatch') },
+          { label: 'Dismiss', style: 'esc-btn-outline', action: () => {} }
+        ],
+        duration: 60
+      });
+      logEscalation(patient.id, '5min', 'Auto-dispatch ambulance + referral sent');
+      cancelEscalation(patient.id); // stop further escalation
+    }
+
+    function showEscalationToast({ title, body, actions, duration }) {
+      const container = document.getElementById('escalation-toasts');
+      const toast = document.createElement('div');
+      toast.className = 'esc-toast';
+      toast.style.setProperty('--duration', duration + 's');
+      toast.innerHTML = `
+        <div class="esc-header">
+          <span class="esc-icon">🚨</span>
+          <div class="esc-title">${title}</div>
+        </div>
+        <div class="esc-body">${body}</div>
+        <div class="esc-actions">
+          ${actions.map((a,i) => `<button class="esc-btn ${a.style}" data-idx="${i}">${a.label}</button>`).join('')}
+        </div>
+        <div class="esc-timer" id="esc-timer-${Date.now()}">Auto-dismiss in ${duration}s</div>
+      `;
+      container.appendChild(toast);
+      actions.forEach((a, i) => {
+        toast.querySelector(`[data-idx="${i}"]`).addEventListener('click', () => {
+          a.action();
+          toast.remove();
+        });
+      });
+
+      // Auto-dismiss countdown
+      let remaining = duration;
+      const timerEl = toast.querySelector('[id^="esc-timer"]');
+      const interval = setInterval(() => {
+        remaining--;
+        if (timerEl) timerEl.textContent = `Auto-dismiss in ${remaining}s`;
+        if (remaining <= 0) { clearInterval(interval); toast.remove(); }
+      }, 1000);
+    }
+
+    function updateEscalationTimerOnCard(patient) {
+      // Attach live countdown to queue card
+      const cards = document.querySelectorAll('.q-card');
+      cards.forEach(card => {
+        const nameEl = card.querySelector('.q-name');
+        if (nameEl && nameEl.textContent.includes(patient.name)) {
+          let existing = card.querySelector('.escalation-timer');
+          if (existing) return;
+          const timerDiv = document.createElement('div');
+          timerDiv.className = 'escalation-timer';
+          timerDiv.innerHTML = `
+            <span>⏱️ Escalation timer:</span>
+            <div class="esc-progress"><div class="esc-progress-fill" id="epf-${patient.id}" style="width:100%;"></div></div>
+            <span id="esc-label-${patient.id}">2:00</span>
+          `;
+          card.appendChild(timerDiv);
+
+          // Countdown
+          let secs = 120;
+          const tick = setInterval(() => {
+            if (escalations[patient.id]?.cancelled) { timerDiv.remove(); clearInterval(tick); return; }
+            secs--;
+            const pct = (secs / 120) * 100;
+            const bar = document.getElementById(`epf-${patient.id}`);
+            const lbl = document.getElementById(`esc-label-${patient.id}`);
+            if (bar) bar.style.width = pct + '%';
+            if (lbl) lbl.textContent = `${Math.floor(secs/60)}:${String(secs%60).padStart(2,'0')}`;
+            if (pct < 30 && bar) bar.style.background = '#F87171';
+            if (secs <= 0) { clearInterval(tick); }
+          }, 1000);
+        }
+      });
+    }
+
+    function logEscalation(patientId, level, action) {
+      const tx = db.transaction('escalations', 'readwrite');
+      tx.objectStore('escalations').put({ patientId, level, action, time: new Date().toISOString() });
+    }
+
+    /* ============================================================
+       API SERVICE (works offline via IndexedDB)
+       ============================================================ */
     const APIService = {
-      patients: [],
-      
-      async delay(ms) {
-        return new Promise(r => setTimeout(r, ms));
-      },
+      async delay(ms) { return new Promise(r => setTimeout(r, ms)); },
 
       async submitTriage(data) {
-        await this.delay(1200); // Simulate network latency + ML inference
-        
+        await this.delay(isOnline ? 800 : 100); // faster offline
+
         let score = 0;
         const critSyms = ['Chest pain','Breathlessness','Seizure'];
         const modSyms = ['Fever','Headache','Injury'];
-        
         data.syms.forEach(s => {
           if (critSyms.includes(s)) score += 4;
           else if (modSyms.includes(s)) score += 2;
           else score += 1;
         });
-        
         score += data.sev;
         if (data.age > 60 || data.age < 5) score = Math.floor(score * 1.5);
 
@@ -1171,80 +1354,83 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         else if (score >= 4) priority = 'ORANGE';
 
         const token = 'P-' + Math.floor(100 + Math.random() * 900);
-        
-        const newPatient = {
+        const patient = {
           id: token,
           name: data.name,
           age: data.age,
-          priority: priority,
-          score: score,
+          priority,
+          score,
           syms: data.syms,
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-          wait: priority === 'RED' ? '2m' : priority === 'ORANGE' ? '15m' : '40m'
+          sev: data.sev,
+          time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}),
+          wait: priority === 'RED' ? '0m' : priority === 'ORANGE' ? '15m' : '40m',
+          createdAt: Date.now(),
+          synced: isOnline // synced if online, false if offline
         };
 
-        this.patients.push(newPatient);
-        this.patients.sort((a,b) => b.score - a.score); // Re-prioritize Queue dynamically
-        
-        return newPatient;
+        // Always save locally first
+        await savePatientLocal(patient);
+        updatePendingUI();
+
+        // If online, mark as synced (simulating server call)
+        if (isOnline) {
+          await this.delay(200);
+          await markSynced(patient.id);
+        }
+
+        return patient;
       },
 
       async getQueue() {
-        // Return seeded mock queue combined with pure data
-        return [
-          {id:'P-042', name:'Ramesh Kumar', age:62, priority:'RED', score:12, syms:['Chest pain','Breathlessness'], time:'10:30 AM', wait:'0m'},
-          {id:'P-101', name:'Savita Devi', age:35, priority:'RED', score:9, syms:['Seizure','Headache'], time:'10:15 AM', wait:'5m'},
-          {id:'P-212', name:'Mohanlal', age:55, priority:'ORANGE', score:6, syms:['Fever','Abdominal pain'], time:'09:40 AM', wait:'12m'},
-          {id:'P-088', name:'Kamla Bai', age:70, priority:'ORANGE', score:5, syms:['Cold','Body ache'], time:'09:20 AM', wait:'25m'},
-          ...this.patients
-        ].sort((a,b) => b.score - a.score);
-      },
-
-      async triggerReferralSync() {
-        await this.delay(1500); // Simulate 3-way API sync (Ambulance + Hospital + eSanjeevani)
-        return true;
+        const local = await getAllPatientsLocal();
+        const seeded = [
+          {id:'P-042', name:'Ramesh Kumar', age:62, priority:'RED', score:12, syms:['Chest pain','Breathlessness'], time:'10:30 AM', wait:'0m', synced:true},
+          {id:'P-101', name:'Savita Devi', age:35, priority:'RED', score:9, syms:['Seizure','Headache'], time:'10:15 AM', wait:'5m', synced:true},
+          {id:'P-212', name:'Mohanlal', age:55, priority:'ORANGE', score:6, syms:['Fever','Abdominal pain'], time:'09:40 AM', wait:'12m', synced:true},
+          {id:'P-088', name:'Kamla Bai', age:70, priority:'ORANGE', score:5, syms:['Cold','Body ache'], time:'09:20 AM', wait:'25m', synced:true},
+        ];
+        const allIds = new Set(local.map(p=>p.id));
+        const merged = [...seeded.filter(p=>!allIds.has(p.id)), ...local];
+        return merged.sort((a,b) => b.score - a.score);
       }
     };
 
-    /* =========================================================
-       UI Controllers
-       ========================================================= */
+    /* ============================================================
+       UI CONTROLLERS
+       ============================================================ */
     const SYMPTOMS = ['Chest pain','Breathlessness','Seizure','Fever','Headache','Vomiting','Abdominal pain','Cold','Injury'];
     let currentSyms = new Set();
     let currentSev = 3;
+    let currentUser = null;
+    let pendingTab = null;
 
     function init() {
-      // Build Symptom grid
       const cont = document.getElementById('sym-container');
       SYMPTOMS.forEach(s => {
         const btn = document.createElement('div');
         btn.className = 'sym-btn';
         btn.innerHTML = `<span style="font-size:18px;">${getIcon(s)}</span> ${s}`;
         btn.onclick = () => {
-          if(currentSyms.has(s)) { currentSyms.delete(s); btn.classList.remove('active'); }
+          if (currentSyms.has(s)) { currentSyms.delete(s); btn.classList.remove('active'); }
           else { currentSyms.add(s); btn.classList.add('active'); }
         };
         cont.appendChild(btn);
       });
       loadQueue();
+      updateNetworkUI(navigator.onLine);
+      updatePendingUI();
     }
 
     function getIcon(s) {
-      const dic = {'Chest pain':'🫀', 'Breathlessness':'🫁', 'Seizure':'⚡', 'Fever':'🌡️', 'Headache':'🧠', 'Vomiting':'🤢', 'Abdominal pain':'🫃', 'Cold':'🤧', 'Injury':'🩹'};
-      return dic[s] || '🩺';
+      const d = {'Chest pain':'🫀','Breathlessness':'🫁','Seizure':'⚡','Fever':'🌡️','Headache':'🧠','Vomiting':'🤢','Abdominal pain':'🫃','Cold':'🤧','Injury':'🩹'};
+      return d[s] || '🩺';
     }
-
-    let currentUser = null; // null or { username: '...', role: '...', fullName: '...' }
-    let pendingTab = null;
 
     function enterPortal(type) {
       if (type === 'clinic') {
         document.getElementById('main-nav').style.display = 'block';
-        document.getElementById('tab-patient').style.display = 'inline-flex';
-        document.getElementById('tab-dispatch').style.display = 'inline-flex';
-        document.getElementById('tab-about').style.display = 'inline-flex';
+        ['tab-patient','tab-dispatch','tab-about'].forEach(id => document.getElementById(id).style.display = 'inline-flex');
         document.getElementById('tab-doctor').style.display = 'none';
-        
         switchTab('patient');
       } else if (type === 'doctor-login') {
         openAuthModal('doctor', 'doctor');
@@ -1252,38 +1438,25 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
     }
 
     function switchTab(id) {
-      if (id === 'landing') {
-          document.getElementById('main-nav').style.display = 'none';
-      }
-
-      // Authorization Check
-      if (id === 'doctor') {
-        if (!currentUser || currentUser.role !== 'doctor') {
-            openAuthModal(id, 'doctor');
-            return;
-        }
+      if (id === 'doctor' && (!currentUser || currentUser.role !== 'doctor')) {
+        openAuthModal(id, 'doctor'); return;
       }
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      
       const tabs = document.querySelectorAll('.nav-tab');
-      for (let i=0; i<tabs.length; i++) {
-        if (tabs[i].getAttribute('onclick') && tabs[i].getAttribute('onclick').includes(`'${id}'`)) {
-            tabs[i].classList.add('active');
-            break;
-        }
+      for (let t of tabs) {
+        if (t.getAttribute('onclick')?.includes(`'${id}'`)) { t.classList.add('active'); break; }
       }
-
-      document.getElementById('panel-'+id).classList.add('active');
-      
+      const panel = document.getElementById('panel-' + id);
+      if (panel) panel.classList.add('active');
       if (id === 'doctor') loadQueue();
-      if (id === 'dispatch' && window.osmMap) { setTimeout(() => window.osmMap.invalidateSize(), 200); }
+      if (id === 'dispatch' && window.osmMap) setTimeout(() => window.osmMap.invalidateSize(), 200);
     }
 
-    function openAuthModal(targetTab, requiredRole) {
+    function openAuthModal(targetTab) {
       pendingTab = targetTab;
       document.getElementById('auth-modal').classList.add('active');
-      document.getElementById('auth-prompt').innerText = targetTab === 'doctor' ? "Please sign in as Doctor to view Dashboard" : "Please sign in as Dispatch Admin to access Command Center";
+      document.getElementById('auth-prompt').innerText = 'Please sign in as Doctor to view Dashboard';
       setTimeout(() => document.getElementById('auth-user').focus(), 100);
     }
 
@@ -1297,31 +1470,18 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
       const u = document.getElementById('auth-user').value.trim();
       const p = document.getElementById('auth-pass').value;
       const err = document.getElementById('auth-error');
-
       err.style.display = 'none';
-
-      if (pendingTab === 'doctor' && u === 'doctor' && p === 'doctor123') {
-          currentUser = { username: u, role: 'doctor', fullName: 'Dr. Sharma' };
+      if (u === 'doctor' && p === 'doctor123') {
+        currentUser = { username: u, role: 'doctor', fullName: 'Dr. A. Sharma' };
+      } else {
+        err.style.display = 'block';
+        err.innerText = 'Invalid credentials.';
+        return;
       }
-      else if (pendingTab === 'dispatch' && u === 'admin' && p === 'admin123') {
-          currentUser = { username: u, role: 'admin', fullName: 'Dispatch Supervisor' };
-      }
-      else {
-          err.style.display = 'block';
-          err.innerText = "Invalid credentials for requested module.";
-          return;
-      }
-
       document.getElementById('user-info').style.display = 'flex';
       document.getElementById('user-name-display').innerText = currentUser.fullName;
-
-      if (pendingTab === 'doctor') {
-          document.getElementById('main-nav').style.display = 'block';
-          document.getElementById('tab-patient').style.display = 'none';
-          document.getElementById('tab-dispatch').style.display = 'none';
-          document.getElementById('tab-about').style.display = 'inline-flex';
-          document.getElementById('tab-doctor').style.display = 'inline-flex';
-      }
+      ['tab-patient','tab-dispatch'].forEach(id => document.getElementById(id).style.display = 'none');
+      ['tab-doctor','tab-about'].forEach(id => document.getElementById(id).style.display = 'inline-flex');
       cancelLogin();
       switchTab(pendingTab);
     }
@@ -1329,19 +1489,17 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
     function handleLogout() {
       currentUser = null;
       document.getElementById('user-info').style.display = 'none';
-      switchTab('landing');
+      document.getElementById('main-nav').style.display = 'none';
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-landing').classList.add('active');
     }
 
     function selectMode(m, el) {
       document.querySelectorAll('.access-card').forEach(c => c.classList.remove('selected'));
       el.classList.add('selected');
-      
-      document.getElementById('flow-web').style.display = 'none';
-      document.getElementById('flow-ussd').style.display = 'none';
-      document.getElementById('flow-sms').style.display = 'none';
+      ['web','ussd','sms'].forEach(f => document.getElementById('flow-' + f).style.display = 'none');
       document.getElementById('flow-result').style.display = 'none';
-      
-      document.getElementById(`flow-${m}`).style.display = 'block';
+      document.getElementById('flow-' + m).style.display = 'block';
     }
 
     function setSeverity(val, el) {
@@ -1363,34 +1521,32 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
     async function submitTriage() {
       const btn = document.getElementById('btn-submit-triage');
       btn.classList.add('loading');
-
       const data = {
-        name: document.getElementById('f-name').value || 'Unk',
+        name: document.getElementById('f-name').value || 'Unknown',
         age: parseInt(document.getElementById('f-age').value) || 30,
         syms: Array.from(currentSyms),
         sev: currentSev
       };
-
       try {
         const ticket = await APIService.submitTriage(data);
-        
-        // Show result
         document.getElementById('reg-step-2').style.display = 'none';
         document.getElementById('flow-result').style.display = 'block';
-        
         document.getElementById('tk-no').textContent = ticket.id;
         document.getElementById('tk-name').textContent = ticket.name + ' • ' + ticket.age + 'y';
         document.getElementById('tk-score').textContent = ticket.score + ' / 20';
         document.getElementById('tk-prio').textContent = ticket.priority;
         document.getElementById('tk-time').textContent = ticket.time;
         document.getElementById('tk-wait').textContent = ticket.wait;
-        
+
+        // Show offline note if needed
+        const offlineNote = document.getElementById('offline-note');
+        offlineNote.style.display = !isOnline ? 'block' : 'none';
+
         const head = document.getElementById('tk-head');
         const wBox = document.getElementById('tk-wait-box');
-        
         if (ticket.priority === 'RED') {
           head.style.background = 'var(--red)';
-          document.getElementById('tk-no').style.color = 'var(--red-light)';
+          document.getElementById('tk-no').style.color = '#FECDD3';
           wBox.style.background = 'var(--red-light)';
           document.getElementById('tk-wait').style.color = 'var(--red-dark)';
         } else if (ticket.priority === 'ORANGE') {
@@ -1400,16 +1556,12 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
           document.getElementById('tk-wait').style.color = 'var(--orange-dark)';
         } else {
           head.style.background = 'var(--primary)';
-          document.getElementById('tk-no').style.color = 'var(--primary-light)';
+          document.getElementById('tk-no').style.color = '#A7F3D0';
           wBox.style.background = 'var(--primary-light)';
           document.getElementById('tk-wait').style.color = 'var(--primary-dark)';
         }
-        
-      } catch (e) {
-        console.error(e);
-      } finally {
-        btn.classList.remove('loading');
-      }
+      } catch(e) { console.error(e); }
+      finally { btn.classList.remove('loading'); }
     }
 
     function resetForm() {
@@ -1423,275 +1575,292 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
 
     async function loadQueue() {
       const qCont = document.getElementById('doctor-queue');
-      qCont.innerHTML = '<div style="text-align:center; padding: 40px; color:var(--text-muted);">Syncing live datastream...</div>';
-      
+      if (!qCont) return;
+      qCont.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);">Loading queue...</div>';
       const qData = await APIService.getQueue();
       qCont.innerHTML = '';
-      
+
+      let redCount = 0;
       qData.forEach(p => {
+        if (p.priority === 'RED') { redCount++; startEscalation(p); }
         const cColor = p.priority === 'RED' ? 'red' : p.priority === 'ORANGE' ? 'orange' : 'primary';
         const init = p.name.substring(0,2).toUpperCase();
-        
-        const html = `
-          <div class="q-card" onclick="this.classList.toggle('expanded')">
-            <div class="q-main">
-              <div class="q-indicator" style="background: var(--${cColor});"></div>
-              <div class="q-avatar" style="background: var(--${cColor}-light); color: var(--${cColor}-dark);">${init}</div>
-              <div class="q-details">
-                <div class="q-name">${p.name} <span class="pill pill-${p.priority==='RED'?'red':p.priority==='ORANGE'?'orange':'green'}">${p.priority}</span></div>
-                <div class="q-meta">${p.age}y • ${p.syms.join(', ')} • Arrived ${p.time}</div>
-              </div>
-              <div class="q-status">
-                <div class="q-score" style="color: var(--${cColor}-dark);">${p.score}</div>
-                <div class="q-wait">Wait: ${p.wait}</div>
-              </div>
+        const syncBadge = p.synced
+          ? '<span class="sync-badge synced">✓ Synced</span>'
+          : '<span class="sync-badge pending">⏳ Pending sync</span>';
+
+        const card = document.createElement('div');
+        card.className = 'q-card';
+        card.dataset.patientId = p.id;
+        card.innerHTML = `
+          <div class="q-main" onclick="this.closest('.q-card').classList.toggle('expanded'); cancelEscalation('${p.id}');">
+            <div class="q-indicator" style="background:var(--${cColor});"></div>
+            <div class="q-avatar" style="background:var(--${cColor}-light,#EFF6FF);color:var(--${cColor}-dark);">${init}</div>
+            <div class="q-details">
+              <div class="q-name">${p.name} <span class="pill pill-${p.priority==='RED'?'red':p.priority==='ORANGE'?'orange':'green'}">${p.priority}</span> ${syncBadge}</div>
+              <div class="q-meta">${p.age}y • ${p.syms.join(', ')} • Arrived ${p.time}</div>
             </div>
-            
-            <div class="q-brief">
-              <div class="vitals-grid">
-                <div class="vital-box"><div class="vital-val val-danger">160/100</div><div class="vital-lbl">BP</div></div>
-                <div class="vital-box"><div class="vital-val val-danger">91%</div><div class="vital-lbl">SpO₂</div></div>
-                <div class="vital-box"><div class="vital-val val-warn">112</div><div class="vital-lbl">HR</div></div>
-                <div class="vital-box"><div class="vital-val val-ok">98.2°F</div><div class="vital-lbl">TEMP</div></div>
-              </div>
-              <div class="ai-summary">
-                <p>✨ <b>AI Synth Brief:</b> Patient presenting with acute chest discomfort and breathlessness starting recently. SpO2 critical and BP hypertensive. High likelihood of ACS. Immediate medical intervention advised.</p>
-              </div>
-              <div style="display:flex; gap:12px;">
-                <button class="btn btn-primary" onclick="event.stopPropagation(); startVideoCall('${p.name}')">Start Video Consult</button>
-                <button class="btn btn-outline" style="background:var(--surface);" onclick="event.stopPropagation(); openMessageModal('${p.name}')">Message Patient</button>
-                <button class="btn btn-danger" onclick="event.stopPropagation(); switchTab('dispatch')">Refer & Dispatch</button>
-              </div>
+            <div class="q-status">
+              <div class="q-score" style="color:var(--${cColor});">${p.score}</div>
+              <div class="q-wait">Wait: ${p.wait}</div>
+            </div>
+          </div>
+          <div class="q-brief">
+            <div class="vitals-grid">
+              <div class="vital-box"><div class="vital-val val-danger">160/100</div><div class="vital-lbl">BP</div></div>
+              <div class="vital-box"><div class="vital-val val-danger">91%</div><div class="vital-lbl">SpO₂</div></div>
+              <div class="vital-box"><div class="vital-val val-warn">112</div><div class="vital-lbl">HR</div></div>
+              <div class="vital-box"><div class="vital-val val-ok">98.2°F</div><div class="vital-lbl">TEMP</div></div>
+            </div>
+            <div class="ai-summary">
+              <p>✨ <b>AI Brief:</b> ${p.priority === 'RED' ? 'Acute presentation. High-likelihood cardiac or neurological event. Immediate intervention required.' : p.priority === 'ORANGE' ? 'Moderate severity. Monitor closely and assess within 30 minutes.' : 'Stable. Routine assessment. Low immediate risk.'}</p>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+              <button class="btn btn-primary" onclick="event.stopPropagation(); cancelEscalation('${p.id}'); startVideoCall('${p.name}')">Start Video Consult</button>
+              <button class="btn btn-outline" onclick="event.stopPropagation(); openMessageModal('${p.name}')">Message Patient</button>
+              <button class="btn btn-danger" onclick="event.stopPropagation(); switchTab('dispatch')">Refer & Dispatch</button>
             </div>
           </div>
         `;
-        qCont.innerHTML += html;
+        qCont.appendChild(card);
+      });
+
+      // Update red count
+      const redEl = document.getElementById('red-count');
+      if (redEl) redEl.textContent = redCount;
+
+      // Attach escalation timers after DOM is built
+      qData.filter(p => p.priority === 'RED').forEach(p => {
+        setTimeout(() => updateEscalationTimerOnCard(p), 100);
       });
     }
 
-    async function triggerSmartDispatch(btn) {
-      btn.classList.add('loading');
-      
-      // Animate the ambulance on the map
-      const ambu = document.getElementById('live-ambu');
-      ambu.style.top = '25%';
-      ambu.style.left = '65%';
-      
-      await APIService.triggerReferralSync();
-      
-      btn.classList.remove('loading');
-      btn.innerHTML = '✅ Dispatched Successfully';
-      btn.classList.remove('btn-primary');
-      btn.style.background = 'var(--primary-dark)';
-      btn.style.color = '#FFF';
-      
-      document.getElementById('sys-modal').classList.add('active');
-    }
-
-    /* =========================================================
-       USSD Simulator Logic
-       ========================================================= */
+    /* ============================================================
+       USSD Simulator
+       ============================================================ */
     const ussdState = { buffer: '', step: 0, lang: 'en' };
     const ussdText = {
-      en: {
-        welcome: "Swasthya Queue\n1. Register Patient\n2. Status\n3. Emergency",
-        age: "Age of patient?",
-        syms: "Chest pain or Breathlessness?\n1. Yes\n2. No",
-        done: "✅ Triage Done\nToken: P-812\nPriority: HIGH\nWait: ~5m\nDoctor will call shortly."
-      },
-      hi: {
-        welcome: "स्वास्थ्य कतार\n1. नया मरीज\n2. स्थिति\n3. आपातकालीन",
-        age: "मरीज की उम्र?",
-        syms: "सीने में दर्द या सांस लेने में तकलीफ?\n1. हाँ\n2. नहीं",
-        done: "✅ ट्राइएज पूरा\nटोकन: P-812\nप्राथमिकता: उच्च\nप्रतीक्षा: ~5m\nडॉक्टर जल्द कॉल करेंगे।"
-      },
-      ta: {
-        welcome: "ஸ்வஸ்த்யா கியூ\n1. புதிய நோயாளி\n2. நிலை\n3. அவசரம்",
-        age: "நோயாளியின் வயது?",
-        syms: "நெஞ்சு வலி அல்லது மூச்சுத் திணறலா?\n1. ஆம்\n2. இல்லை",
-        done: "✅ மதிப்பீடு முடிந்தது\nடோக்கன்: P-812\nமுன்னுரிமை: உயர்\nகாத்திருப்பு: ~5நிமி\nமருத்துவர் அழைப்பார்."
-      },
-      te: {
-        welcome: "స్వాస్థ్య క్యూ\n1. కొత్త రోగి\n2. స్థితి\n3. అత్యవసరం",
-        age: "రోగి వయస్సు?",
-        syms: "ఛాతీ నొప్పి లేదా శ్వాస ఆడకపోవడమా?\n1. అవును\n2. కాదు",
-        done: "✅ మదింపు పూర్తయింది\nటోకెన్: P-812\nప్రాధాన్యత: ఎక్కువ\nవేచి ఉండండి: ~5నిమి\nడాక్టర్ త్వరలో కాల్ చేస్తారు."
-      },
-      kn: {
-        welcome: "ಸ್ವಾಸ್ಥ್ಯ ಕ್ಯೂ\n1. ಹೊಸ ರೋಗಿ\n2. ಸ್ಥಿತಿ\n3. ತುರ್ತು",
-        age: "ರೋಗಿಯ ವಯಸ್ಸು?",
-        syms: "ಎದೆನೋವು ಅಥವಾ ಉಸಿರಾಟದ ತೊಂದರೆಯೇ?\n1. ಹೌದು\n2. ಇಲ್ಲ",
-        done: "✅ ವಿಂಗಡಣೆ ಮುಗಿದಿದೆ\nಟೋಕನ್: P-812\nಆದ್ಯತೆ: ಹೆಚ್ಚು\nಕಾಯುವಿಕೆ: ~5ನಿ\nವೈದ್ಯರು ಶೀಘ್ರದಲ್ಲೇ ಕರೆ ಮಾಡಲಿದ್ದಾರೆ."
-      }
+      en: { welcome:"Swasthya Queue\n1. Register Patient\n2. Status\n3. Emergency", age:"Age of patient?", syms:"Chest pain or Breathlessness?\n1. Yes\n2. No", done:"✅ Triage Done\nToken: P-812\nPriority: HIGH\nWait: ~5m\nDoctor will call shortly." },
+      hi: { welcome:"स्वास्थ्य कतार\n1. नया मरीज\n2. स्थिति\n3. आपातकालीन", age:"मरीज की उम्र?", syms:"सीने में दर्द या सांस?\n1. हाँ\n2. नहीं", done:"✅ ट्राइएज पूरा\nटोकन: P-812\nप्राथमिकता: उच्च\nप्रतीक्षा: ~5m" },
+      ta: { welcome:"ஸ்வஸ்த்யா கியூ\n1. புதிய நோயாளி\n2. நிலை\n3. அவசரம்", age:"நோயாளியின் வயது?", syms:"நெஞ்சு வலி?\n1. ஆம்\n2. இல்லை", done:"✅ மதிப்பீடு முடிந்தது\nடோக்கன்: P-812" },
+      te: { welcome:"స్వాస్థ్య క్యూ\n1. కొత్త రోగి\n2. స్థితి\n3. అత్యవసరం", age:"రోగి వయస్సు?", syms:"ఛాతీ నొప్పి?\n1. అవును\n2. కాదు", done:"✅ మదింపు పూర్తయింది\nటోకెన్: P-812" },
+      kn: { welcome:"ಸ್ವಾಸ್ಥ್ಯ ಕ್ಯೂ\n1. ಹೊಸ ರೋಗಿ\n2. ಸ್ಥಿತಿ\n3. ತುರ್ತು", age:"ರೋಗಿಯ ವಯಸ್ಸು?", syms:"ಎದೆನೋವು?\n1. ಹೌದು\n2. ಇಲ್ಲ", done:"✅ ವಿಂಗಡಣೆ ಮುಗಿದಿದೆ\nಟೋಕನ್: P-812" }
     };
 
-    function ussdInput(char) {
-      ussdState.buffer += char;
-      renderUssdScreen();
-    }
+    function ussdInput(char) { ussdState.buffer += char; renderUssdScreen(); }
     function renderUssdScreen() {
       const scr = document.getElementById('ussd-screen');
-      if (ussdState.step === 0 && !ussdState.buffer.includes('*599#')) {
-        scr.innerText = `Menu:\nType *599# and press Send.\n\n${ussdState.buffer}_`;
-      } else if (ussdState.step === 0) {
-        scr.innerText = `Type *599# and press Send.\n\n${ussdState.buffer}_`;
-      } else if (ussdState.step === 1) {
-        scr.innerText = `Language:\n1. Eng 2. हिंदी 3. தமிழ்\n4. తెలుగు 5. ಕನ್ನಡ\n\nInput: ${ussdState.buffer}_`;
-      } else if (ussdState.step === 2) {
-        scr.innerText = `${ussdText[ussdState.lang].welcome}\n\nInput: ${ussdState.buffer}_`;
-      } else if (ussdState.step === 3) {
-        scr.innerText = `${ussdText[ussdState.lang].age}\n\nInput: ${ussdState.buffer}_`;
-      } else if (ussdState.step === 4) {
-        scr.innerText = `${ussdText[ussdState.lang].syms}\n\nInput: ${ussdState.buffer}_`;
-      } else if (ussdState.step === 5) {
-        scr.innerText = ussdText[ussdState.lang].done;
-      }
+      const t = ussdText[ussdState.lang];
+      const buf = ussdState.buffer;
+      if (ussdState.step === 0 && !buf.includes('*599#')) scr.innerText = `Menu:\nType *599# and press Send.\n\n${buf}_`;
+      else if (ussdState.step === 0) scr.innerText = `${buf}_`;
+      else if (ussdState.step === 1) scr.innerText = `Language:\n1.Eng 2.हिंदी 3.தமிழ்\n4.తెలుగు 5.ಕನ್ನಡ\n\nInput: ${buf}_`;
+      else if (ussdState.step === 2) scr.innerText = `${t.welcome}\n\nInput: ${buf}_`;
+      else if (ussdState.step === 3) scr.innerText = `${t.age}\n\nInput: ${buf}_`;
+      else if (ussdState.step === 4) scr.innerText = `${t.syms}\n\nInput: ${buf}_`;
+      else if (ussdState.step === 5) scr.innerText = t.done;
     }
     async function ussdSend() {
-      if (ussdState.step === 0 && ussdState.buffer === '*599#') {
-        ussdState.step = 1; ussdState.buffer = '';
-      } else if (ussdState.step === 1 && /^[1-5]$/.test(ussdState.buffer)) {
-        const langMap = {'1':'en', '2':'hi', '3':'ta', '4':'te', '5':'kn'};
-        ussdState.lang = langMap[ussdState.buffer];
-        ussdState.step = 2; ussdState.buffer = '';
-      } else if (ussdState.step === 2 && ussdState.buffer === '1') {
-        ussdState.step = 3; ussdState.buffer = '';
-      } else if (ussdState.step === 3 && ussdState.buffer.length > 0) {
-        ussdState.step = 4; ussdState.buffer = '';
-      } else if (ussdState.step === 4 && ussdState.buffer.length > 0) {
+      const b = ussdState.buffer;
+      if (ussdState.step === 0 && b === '*599#') { ussdState.step = 1; ussdState.buffer = ''; }
+      else if (ussdState.step === 1 && /^[1-5]$/.test(b)) { ussdState.lang = ['en','en','hi','ta','te','kn'][parseInt(b)]; ussdState.step = 2; ussdState.buffer = ''; }
+      else if (ussdState.step === 2 && b === '1') { ussdState.step = 3; ussdState.buffer = ''; }
+      else if (ussdState.step === 3 && b.length > 0) { ussdState.step = 4; ussdState.buffer = ''; }
+      else if (ussdState.step === 4 && b.length > 0) {
         ussdState.step = 5; ussdState.buffer = '';
         await APIService.submitTriage({ name: "USSD User", age: 50, syms: ["Chest pain"], sev: 4 });
-        loadQueue();
-      } else {
-        ussdState.buffer = ''; // clear on invalid
-      }
+        updatePendingUI();
+      } else { ussdState.buffer = ''; }
       renderUssdScreen();
     }
 
-    /* =========================================================
-       SMS Simulator Logic
-       ========================================================= */
+    /* ============================================================
+       SMS Simulator
+       ============================================================ */
     const smsFlow = [
-      { trigger: 'yes', resp: "Great! What is the patient's age?" },
-      { trigger: '*', resp: "Does the patient have fever, chest pain, or trauma? Please list symptoms." },
-      { trigger: '*', resp: "Noted. On a scale of 1-5, how severe is the pain/discomfort?" },
-      { trigger: '*', resp: "✅ Registration complete. Token: P-404. Priority: MEDIUM. Wait time: ~15 mins. We will notify you when it's your turn. The doctor will review your case shortly." }
+      { resp: "Great! What is the patient's age?" },
+      { resp: "Does the patient have fever, chest pain, or trauma? List symptoms." },
+      { resp: "On a scale of 1-5, how severe is the discomfort?" },
+      { resp: "✅ Registered. Token: P-404. Priority: MEDIUM. Wait: ~15 min. Doctor will review shortly. Saved locally — syncing to server soon." }
     ];
     let smsStep = 0;
 
     async function sendSMS() {
       const inp = document.getElementById('chat-input');
       const val = inp.value.trim();
-      if(!val) return;
-      
+      if (!val) return;
       const body = document.getElementById('chat-body');
       body.innerHTML += `<div class="chat-bubble chat-right">${val}</div>`;
       inp.value = '';
       body.scrollTop = body.scrollHeight;
-
-      // Simulate Bot Typings
       setTimeout(async () => {
-        let msg = "I didn't understand that.";
+        let msg = "I didn't understand that. Please try again.";
         if (smsStep < smsFlow.length) {
           msg = smsFlow[smsStep].resp;
           if (smsStep === smsFlow.length - 1) {
             await APIService.submitTriage({ name: "SMS User", age: 30, syms: ["Fever"], sev: 3 });
-            loadQueue();
+            updatePendingUI();
           }
           smsStep++;
         }
         body.innerHTML += `<div class="chat-bubble chat-left">${msg}</div>`;
         body.scrollTop = body.scrollHeight;
-      }, 1000);
+      }, 900);
     }
 
+    /* ============================================================
+       REFERRAL PANEL ACTIONS
+       ============================================================ */
+    function selHosp(id, name) {
+      document.querySelectorAll('.h-card').forEach(c => c.classList.remove('sel'));
+      document.getElementById(id).classList.add('sel');
+      ['hc1','hc2','hc3'].forEach(h => {
+        const det = document.getElementById(h + '-detail');
+        if (det) det.style.display = h === id ? 'block' : 'none';
+      });
+      document.getElementById('mm-to').textContent = name;
+    }
+    function dispatchAmbu(n) {
+      const btn = document.getElementById('a'+n+'-btn');
+      btn.textContent = 'Dispatched ✓'; btn.classList.add('done'); btn.disabled = true;
+      document.getElementById('mm-ambu').textContent = n===1 ? 'AMB-BW04 (ETA 4 min)' : 'AMB-BW07 (ETA 18 min)';
+      document.getElementById('tl-ambu-dot').className = 'tl-d tl-done-d';
+      document.getElementById('tl-ambu-lbl').textContent = 'Ambulance dispatched — AMB-108-BW0' + (n===1?'4':'7');
+      document.getElementById('tl-ambu-time').textContent = 'Just now';
+    }
+    function confirmBed(name) {
+      document.getElementById('mm-bed').textContent = 'Reserved · ' + name;
+      document.getElementById('tl-bed-dot').className = 'tl-d tl-done-d';
+      document.getElementById('tl-bed-lbl').textContent = 'Bed reserved — ' + name;
+      document.getElementById('tl-bed-time').textContent = 'Just now · Auto-confirmed';
+    }
+    function sendReferral() {
+      const el = document.getElementById('ref-status');
+      el.textContent = 'Sent ✓'; el.className = 'pill pill-green';
+      document.getElementById('tl-ref-dot').className = 'tl-d tl-done-d';
+      document.getElementById('tl-ref-lbl').textContent = 'Referral sent — hospital notified';
+      document.getElementById('tl-ref-time').textContent = 'Just now · SMS + eReferral';
+    }
+    function triggerFull() { dispatchAmbu(1); setTimeout(() => confirmBed('District Hospital Barwani'), 300); setTimeout(() => sendReferral(), 600); document.getElementById('sys-modal').classList.add('active'); }
+    function triggerAmbuOnly() { dispatchAmbu(1); }
+    function triggerNotify() { sendReferral(); }
+    function editMsg() { const m = document.getElementById('ref-msg'); m.contentEditable = 'true'; m.focus(); m.style.borderLeftColor = '#7C3AED'; }
 
-    // Initialize Real-time Map
+    /* ============================================================
+       MAP
+       ============================================================ */
     function initMap() {
-      var map = L.map('osm-map').setView([22.033, 74.91], 13);
-      window.osmMap = map;
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 19,
-          attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-      }).addTo(map);
-      
-      var phcIcon = L.divIcon({className: '', html: '<div style="background:#C0392B; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>', iconSize: [14,14]});
-      var hospIcon = L.divIcon({className: '', html: '<div style="background:#2980B9; width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>', iconSize: [14,14]});
-      var ambuIcon = L.divIcon({className: '', html: '<div style="font-size:20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🚑</div>', iconSize: [20,20]});
-
-      L.marker([22.035, 74.90], {icon: phcIcon}).addTo(map).bindPopup('<b>PHC Barwani</b><br>Currently full.');
-      L.marker([22.030, 74.93], {icon: hospIcon}).addTo(map).bindPopup('<b>District Hospital Barwani</b><br>ICU Beds: 4 Available');
-      
-      // Animated LIVE ambulance
-      var ambu = L.marker([22.034, 74.905], {icon: ambuIcon, zIndexOffset: 1000}).addTo(map).bindPopup('<b>AMB-108-BW04</b><br>ETA 4 min');
-      
-      setInterval(() => {
-          let latlng = ambu.getLatLng();
-          let newLat = latlng.lat - 0.00005;
-          let newLng = latlng.lng + 0.00015;
-          if(newLng > 74.93) { newLng = 74.905; newLat = 22.034; }
+      if (typeof L === 'undefined') return;
+      try {
+        const map = L.map('osm-map').setView([22.033, 74.91], 13);
+        window.osmMap = map;
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(map);
+        const phcIcon = L.divIcon({ className: '', html: '<div style="background:#C0392B;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>', iconSize: [14,14] });
+        const hospIcon = L.divIcon({ className: '', html: '<div style="background:#2980B9;width:14px;height:14px;border-radius:50%;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.5);"></div>', iconSize: [14,14] });
+        const ambuIcon = L.divIcon({ className: '', html: '<div style="font-size:20px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));">🚑</div>', iconSize: [20,20] });
+        L.marker([22.035, 74.90], { icon: phcIcon }).addTo(map).bindPopup('<b>PHC Barwani</b>');
+        L.marker([22.030, 74.93], { icon: hospIcon }).addTo(map).bindPopup('<b>District Hospital Barwani</b><br>ICU: 4 beds free');
+        const ambu = L.marker([22.034, 74.905], { icon: ambuIcon, zIndexOffset: 1000 }).addTo(map).bindPopup('<b>AMB-108-BW04</b><br>ETA 4 min');
+        setInterval(() => {
+          let ll = ambu.getLatLng();
+          let newLng = ll.lng + 0.00015, newLat = ll.lat - 0.00005;
+          if (newLng > 74.93) { newLng = 74.905; newLat = 22.034; }
           ambu.setLatLng([newLat, newLng]);
-      }, 1000);
+        }, 1000);
+      } catch(e) { console.error('Map error:', e); }
     }
-    
-    /* =========================================================
-       Modal Action Controllers
-       ========================================================= */
-    function startVideoCall(patientName) {
-      document.getElementById('video-patient-name').innerText = "Connected to " + patientName;
-      document.getElementById('video-status-text').innerText = "Establishing E2E Connection to " + patientName + "...";
+
+    /* ============================================================
+       VIDEO + MESSAGE MODALS
+       ============================================================ */
+    function startVideoCall(name) {
+      document.getElementById('video-patient-name').innerText = 'Connected to ' + name;
       document.getElementById('video-call-modal').classList.add('active');
     }
-
-    function endVideoCall() {
-      document.getElementById('video-call-modal').classList.remove('active');
-    }
-
-    function openMessageModal(patientName) {
-      document.getElementById('msg-patient-name').innerText = patientName;
+    function endVideoCall() { document.getElementById('video-call-modal').classList.remove('active'); }
+    function openMessageModal(name) {
+      document.getElementById('msg-patient-name').innerText = name;
       document.getElementById('message-modal').classList.add('active');
     }
-
-    function closeMessageModal() {
-      document.getElementById('message-modal').classList.remove('active');
-    }
-
+    function closeMessageModal() { document.getElementById('message-modal').classList.remove('active'); }
     function sendMessage() {
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
       if (!text) return;
-
       const body = document.getElementById('msg-body');
-      
-      const bounceStr = `<div class="chat-bubble chat-right">${text}</div>`;
-      body.insertAdjacentHTML('beforeend', bounceStr);
+      body.innerHTML += `<div class="chat-bubble chat-right">${text}</div>`;
       input.value = '';
-      
-      // Auto reply mock
       setTimeout(() => {
-        const reply = `<div class="chat-bubble chat-left" style="background: var(--surface);">Dr. Sharma, the patient is ready to proceed.</div>`;
-        body.insertAdjacentHTML('beforeend', reply);
+        body.innerHTML += `<div class="chat-bubble chat-left" style="background:var(--surface);">Dr. Sharma, the patient is ready to proceed.</div>`;
         body.scrollTop = body.scrollHeight;
       }, 1000);
-
       body.scrollTop = body.scrollHeight;
     }
 
-    document.addEventListener("DOMContentLoaded", initMap);
-    
-    document.addEventListener("DOMContentLoaded", init);
+    /* ============================================================
+       PWA MANIFEST (inline, no separate file needed)
+       ============================================================ */
+    function registerPWA() {
+      const manifest = {
+        name: "Swasthya Queue",
+        short_name: "SQueue",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#0B1120",
+        theme_color: "#0D9488",
+        icons: [{ src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230D9488' rx='20'/><text y='.9em' font-size='80' x='10'>🏥</text></svg>", sizes: "192x192", type: "image/svg+xml" }]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      document.getElementById('manifest-link').href = url;
 
+      if ('serviceWorker' in navigator) {
+        // Inline service worker for offline caching
+        const swCode = `
+          const CACHE_NAME = 'swasthya-v1';
+          const STATIC_ASSETS = ['/'];
+          self.addEventListener('install', e => {
+            e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(STATIC_ASSETS).catch(()=>{})));
+            self.skipWaiting();
+          });
+          self.addEventListener('activate', e => {
+            e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))));
+            self.clients.claim();
+          });
+          self.addEventListener('fetch', e => {
+            if (e.request.method !== 'GET') return;
+            e.respondWith(fetch(e.request).catch(() => caches.match(e.request).then(r => r || new Response('Offline', {status: 503}))));
+          });
+        `;
+        const swBlob = new Blob([swCode], { type: 'application/javascript' });
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(() => {});
+      }
+    }
+
+    /* ============================================================
+       BOOT
+       ============================================================ */
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initDB();
+      init();
+      initMap();
+      registerPWA();
+      updateNetworkUI(navigator.onLine);
+    });
   </script>
-  
+
   <script type="text/javascript">
     function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        includedLanguages: 'en,hi,ta,te,kn',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-      }, 'google_translate_element');
+      try {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,hi,ta,te,kn',
+          layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+        }, 'google_translate_element_float');
+      } catch(e) {}
     }
   </script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

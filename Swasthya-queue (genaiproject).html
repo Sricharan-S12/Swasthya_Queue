@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="theme-color" content="#1A6B48">
   <title>Swasthya Queue — Rural Teleconsultation Triage</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
   
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3004/3004458.png">
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
     :root {
@@ -54,7 +58,7 @@
 
     /* === Nav === */
     .nav { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow-sm); }
-    .nav-inner { display: flex; gap: 8px; padding: 12px 24px; max-width: 1000px; margin: 0 auto; overflow-x: auto; scrollbar-width: none; }
+    .nav-inner { display: flex; gap: 8px; padding: 12px 24px; max-width: 1000px; margin: 0 auto; flex-wrap: wrap; justify-content: flex-start; }
     .nav-tab { padding: 10px 16px; border-radius: 100px; border: none; background: transparent; font-size: 14px; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; }
     .nav-tab:hover { background: #F1F5F9; color: var(--text-main); }
     .nav-tab.active { background: var(--primary-light); color: var(--primary-dark); }
@@ -306,6 +310,14 @@
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         How it Works
       </button>
+      <button id="tab-analytics" class="nav-tab" onclick="switchTab('analytics')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+        Analytics
+      </button>
+      <button id="tab-admin" class="nav-tab" onclick="switchTab('admin')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+        Admin Panel
+      </button>
       <div id="google_translate_element" style="margin-left: auto; padding-right: 12px; display: flex; align-items: center;"></div>
       <div id="user-info" style="display: none; align-items: center; gap: 12px; border-left: 1px solid var(--border); padding-left: 12px;">
         <span id="user-name-display" style="font-size: 14px; font-weight: 600; color: var(--primary-dark);">User</span>
@@ -367,7 +379,7 @@
             <span class="pill pill-green">Step 1 of 2</span>
           </div>
           <div class="card-body">
-            <form id="form-details" onsubmit="event.preventDefault(); nextStep();">
+                        <form id="form-details" onsubmit="event.preventDefault(); nextStep();">
               <div class="input-grp">
                 <label class="input-label">Preferred Language / पसंदीदा भाषा</label>
                 <select id="f-lang" class="input-field">
@@ -381,21 +393,21 @@
               <div class="grid-2">
                 <div class="input-grp">
                   <label class="input-label">Full Name</label>
-                  <input type="text" id="f-name" class="input-field" placeholder="E.g. Ramesh Kumar" required>
+                  <input type="text" id="f-name" class="input-field" placeholder="E.g. Ramesh Kumar" required minlength="3" pattern="^[a-zA-Z\s]+$" title="Name should only contain letters and spaces, minimum 3 characters">
                 </div>
                 <div class="input-grp">
                   <label class="input-label">Age</label>
-                  <input type="number" id="f-age" class="input-field" placeholder="E.g. 45" required>
+                  <input type="number" id="f-age" class="input-field" placeholder="E.g. 45" required min="1" max="150" title="Please enter a valid age between 1 and 150">
                 </div>
               </div>
               <div class="grid-2">
                 <div class="input-grp">
                   <label class="input-label">Phone Number</label>
-                  <input type="tel" id="f-phone" class="input-field" placeholder="98XXXXXXXX" required>
+                  <input type="tel" id="f-phone" class="input-field" placeholder="98XXXXXXXX" required pattern="^[6-9]\d{9}$" title="Please enter a valid 10-digit Indian mobile number starting with 6-9">
                 </div>
                 <div class="input-grp">
                   <label class="input-label">Village / Block</label>
-                  <input type="text" id="f-loc" class="input-field" placeholder="Barwani" required>
+                  <input type="text" id="f-loc" class="input-field" placeholder="Barwani" required minlength="2">
                 </div>
               </div>
               <div class="input-grp">
@@ -1053,6 +1065,156 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
 
 
   </main>
+<!-- ANALYTICS DASHBOARD -->
+<div class="panel" id="panel-analytics">
+  <div class="grid-2" style="gap: 16px; margin-bottom: 16px;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Weekly Patient Volume</div>
+      </div>
+      <div class="card-body">
+        <canvas id="chart-weekly" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Daily Triage Priority Distribution</div>
+      </div>
+      <div class="card-body" style="display:flex; justify-content:center;">
+        <canvas id="chart-triage" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Most Common Presenting Symptoms (7 Days)</div>
+    </div>
+    <div class="card-body">
+      <canvas id="chart-symptoms" height="100"></canvas>
+    </div>
+  </div>
+</div>
+
+  <!-- ADMIN PANEL (PHC & DOCTOR SCHEDULING) -->
+<div class="panel" id="panel-admin">
+  <div class="grid-2" style="gap: 16px; margin-bottom: 16px;">
+    
+    <!-- PHC Facility Management -->
+    <div class="card">
+      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="card-title">PHC Facility Management</h2>
+        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="openAdminModal('add-phc')">+ Add PHC</button>
+      </div>
+      <div class="card-body">
+        <table class="score-table">
+          <tr>
+            <th>Facility Name</th>
+            <th>Location</th>
+            <th>Kiosks</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+          <tr>
+            <td>PHC Barwani</td>
+            <td>District HQ</td>
+            <td>3 Active</td>
+            <td><span class="pill pill-green">Online</span></td>
+            <td><a href="#" style="color:var(--primary); font-size:12px; font-weight:600; text-decoration:none;" onclick="event.preventDefault(); openAdminModal('manage-phc')">Manage</a></td>
+          </tr>
+          <tr>
+            <td>PHC Rajpur</td>
+            <td>Tehsil Block</td>
+            <td>1 Active</td>
+            <td><span class="pill pill-green">Online</span></td>
+            <td><a href="#" style="color:var(--primary); font-size:12px; font-weight:600; text-decoration:none;" onclick="event.preventDefault(); openAdminModal('manage-phc')">Manage</a></td>
+          </tr>
+          <tr>
+            <td>PHC Sendhwa</td>
+            <td>Border Zone</td>
+            <td>0 Active</td>
+            <td><span class="pill pill-red">Offline</span></td>
+            <td><a href="#" style="color:var(--primary); font-size:12px; font-weight:600; text-decoration:none;" onclick="event.preventDefault(); openAdminModal('manage-phc')">Manage</a></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Doctor Scheduling -->
+    <div class="card">
+      <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 class="card-title">Doctor Scheduling</h2>
+        <button class="btn btn-primary" style="padding: 6px 12px; font-size: 12px;" onclick="openAdminModal('assign-shift')">Assign Shift</button>
+      </div>
+      <div class="card-body" style="display: flex; flex-direction: column; gap: 10px;">
+        
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #D6EAF8; color: #2980B9; display: flex; align-items: center; justify-content: center; font-weight: 700;">DS</div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">Dr. R. Sharma</div>
+              <div style="font-size: 12px; color: var(--text-muted);">General Physician</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom:4px;">Today • 09:00 AM - 05:00 PM</div>
+            <span class="pill pill-green">On Duty</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #FDEBD0; color: #E67E22; display: flex; align-items: center; justify-content: center; font-weight: 700;">AK</div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">Dr. Anita Kumar</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Pediatrician</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom:4px;">Tomorrow • 10:00 AM - 06:00 PM</div>
+            <span class="pill pill-orange">Scheduled</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: #E8DAEF; color: #6C3483; display: flex; align-items: center; justify-content: center; font-weight: 700;">MJ</div>
+            <div>
+              <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">Dr. M. Joshi</div>
+              <div style="font-size: 12px; color: var(--text-muted);">Cardiologist (On-Call)</div>
+            </div>
+          </div>
+          <div style="text-align: right;">
+            <div style="font-size: 12px; font-weight: 600; margin-bottom:4px;">Today • 08:00 PM - 08:00 AM</div>
+            <span class="pill pill-blue">Night Shift</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- Admin Action Modal -->
+  <div class="modal-overlay" id="admin-action-modal">
+    <div class="modal-content" style="text-align: left; max-width: 400px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px;">
+        <h2 style="font-size: 20px; font-weight: 700;" id="admin-modal-title">Action Title</h2>
+        <button style="border: none; background: transparent; cursor: pointer; font-size: 20px;" onclick="closeAdminModal()">✕</button>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 16px;" id="admin-modal-desc">Action description.</p>
+      
+      <div id="admin-modal-body">
+        <div class="input-grp">
+          <label class="input-label" id="admin-modal-input-label">Details</label>
+          <input type="text" class="input-field" placeholder="Enter details..." required>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-full" id="admin-submit-btn" onclick="submitAdminAction()">Confirm</button>
+    </div>
+  </div>
 
   <!-- Notification Modal -->
   <div class="modal-overlay" id="sys-modal">
@@ -1243,6 +1405,8 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         document.getElementById('tab-patient').style.display = 'inline-flex';
         document.getElementById('tab-dispatch').style.display = 'inline-flex';
         document.getElementById('tab-about').style.display = 'inline-flex';
+        document.getElementById('tab-analytics').style.display = 'inline-flex';
+        document.getElementById('tab-admin').style.display = 'inline-flex';
         document.getElementById('tab-doctor').style.display = 'none';
         
         switchTab('patient');
@@ -1293,35 +1457,55 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
       document.getElementById('auth-form').reset();
     }
 
-    function handleLogin() {
+  function handleLogin() {
       const u = document.getElementById('auth-user').value.trim();
       const p = document.getElementById('auth-pass').value;
       const err = document.getElementById('auth-error');
 
       err.style.display = 'none';
 
-      if (pendingTab === 'doctor' && u === 'doctor' && p === 'doctor123') {
-          currentUser = { username: u, role: 'doctor', fullName: 'Dr. Sharma' };
-      }
-      else if (pendingTab === 'dispatch' && u === 'admin' && p === 'admin123') {
-          currentUser = { username: u, role: 'admin', fullName: 'Dispatch Supervisor' };
-      }
-      else {
-          err.style.display = 'block';
-          err.innerText = "Invalid credentials for requested module.";
-          return;
+      if (pendingTab === 'dispatch') {
+          if (u === 'admin' && p === 'admin123') {
+              currentUser = { username: u, role: 'admin', fullName: 'Dispatch Supervisor' };
+          } else {
+              err.style.display = 'block';
+              err.innerText = "Invalid credentials for requested module.";
+              return;
+          }
+      } 
+      else if (pendingTab === 'doctor') {
+          if (u === 'admin' && p === 'admin123') {
+              currentUser = { username: u, role: 'admin', fullName: 'System Admin' };
+              pendingTab = 'admin';
+          } 
+          else if (u === 'doctor' && p === 'doctor123') {
+              currentUser = { username: u, role: 'doctor', fullName: 'Dr. Sharma' };
+          } 
+          else {
+              err.style.display = 'block';
+              err.innerText = "Invalid credentials. Hint: doctor/doctor123 or admin/admin123";
+              return;
+          }
       }
 
       document.getElementById('user-info').style.display = 'flex';
       document.getElementById('user-name-display').innerText = currentUser.fullName;
 
-      if (pendingTab === 'doctor') {
-          document.getElementById('main-nav').style.display = 'block';
-          document.getElementById('tab-patient').style.display = 'none';
-          document.getElementById('tab-dispatch').style.display = 'none';
-          document.getElementById('tab-about').style.display = 'inline-flex';
+      document.getElementById('main-nav').style.display = 'block';
+      document.getElementById('tab-patient').style.display = 'none';
+      document.getElementById('tab-dispatch').style.display = 'none';
+      document.getElementById('tab-about').style.display = 'inline-flex';
+      
+      if (currentUser.role === 'admin') {
+          document.getElementById('tab-analytics').style.display = 'inline-flex';
+          document.getElementById('tab-admin').style.display = 'inline-flex';
+          document.getElementById('tab-doctor').style.display = 'inline-flex';
+      } else {
+          document.getElementById('tab-analytics').style.display = 'none';
+          document.getElementById('tab-admin').style.display = 'none';
           document.getElementById('tab-doctor').style.display = 'inline-flex';
       }
+
       cancelLogin();
       switchTab(pendingTab);
     }
@@ -1374,7 +1558,6 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
       try {
         const ticket = await APIService.submitTriage(data);
         
-        // Show result
         document.getElementById('reg-step-2').style.display = 'none';
         document.getElementById('flow-result').style.display = 'block';
         
@@ -1383,7 +1566,27 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         document.getElementById('tk-score').textContent = ticket.score + ' / 20';
         document.getElementById('tk-prio').textContent = ticket.priority;
         document.getElementById('tk-time').textContent = ticket.time;
-        document.getElementById('tk-wait').textContent = ticket.wait;
+
+        const waitMinutes = parseInt(ticket.wait);
+        let waitSeconds = waitMinutes * 60;
+        const waitElement = document.getElementById('tk-wait');
+
+        if (window.waitTimer) clearInterval(window.waitTimer);
+
+        waitElement.textContent = waitMinutes + "m 00s";
+        
+        window.waitTimer = setInterval(() => {
+          waitSeconds--;
+          if (waitSeconds <= 0) {
+            clearInterval(window.waitTimer);
+            waitElement.textContent = "See Doctor Now";
+          } else {
+            const m = Math.floor(waitSeconds / 60);
+            const s = waitSeconds % 60;
+            const formattedSeconds = s < 10 ? "0" + s : s;
+            waitElement.textContent = m + "m " + formattedSeconds + "s";
+          }
+        }, 1000);
         
         const head = document.getElementById('tk-head');
         const wBox = document.getElementById('tk-wait-box');
@@ -1467,6 +1670,10 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         `;
         qCont.innerHTML += html;
       });
+
+      if (typeof updateAnalytics === 'function') {
+        updateAnalytics();
+      }
     }
 
     async function triggerSmartDispatch(btn) {
@@ -1525,6 +1732,14 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
       }
     };
 
+    function validateUSSDAge(ageStr) {
+      const age = parseInt(ageStr);
+      if (isNaN(age) || age < 1 || age > 150) {
+        return false;
+      }
+      return true;
+    }
+
     function ussdInput(char) {
       ussdState.buffer += char;
       renderUssdScreen();
@@ -1547,64 +1762,123 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         scr.innerText = ussdText[ussdState.lang].done;
       }
     }
-    async function ussdSend() {
-      if (ussdState.step === 0 && ussdState.buffer === '*599#') {
-        ussdState.step = 1; ussdState.buffer = '';
-      } else if (ussdState.step === 1 && /^[1-5]$/.test(ussdState.buffer)) {
-        const langMap = {'1':'en', '2':'hi', '3':'ta', '4':'te', '5':'kn'};
-        ussdState.lang = langMap[ussdState.buffer];
-        ussdState.step = 2; ussdState.buffer = '';
-      } else if (ussdState.step === 2 && ussdState.buffer === '1') {
-        ussdState.step = 3; ussdState.buffer = '';
-      } else if (ussdState.step === 3 && ussdState.buffer.length > 0) {
-        ussdState.step = 4; ussdState.buffer = '';
-      } else if (ussdState.step === 4 && ussdState.buffer.length > 0) {
-        ussdState.step = 5; ussdState.buffer = '';
-        await APIService.submitTriage({ name: "USSD User", age: 50, syms: ["Chest pain"], sev: 4 });
-        loadQueue();
-      } else {
-        ussdState.buffer = ''; // clear on invalid
-      }
-      renderUssdScreen();
+        async function ussdSend() {
+  const scr = document.getElementById('ussd-screen');
+
+  if (ussdState.step === 0) {
+    if (ussdState.buffer === '*599#') {
+      ussdState.step = 1; ussdState.buffer = '';
+    } else {
+      scr.innerText = `Type *599# and press Send.\n\n❌ Invalid USSD code!\nInput: ${ussdState.buffer}_`;
+      ussdState.buffer = '';
+      return;
     }
+  } else if (ussdState.step === 1) {
+    if (/^[1-5]$/.test(ussdState.buffer)) {
+      const langMap = {'1':'en', '2':'hi', '3':'ta', '4':'te', '5':'kn'};
+      ussdState.lang = langMap[ussdState.buffer];
+      ussdState.step = 2; ussdState.buffer = '';
+    } else {
+      scr.innerText = `Language:\n1. Eng 2. हिंदी 3. தமிழ்\n4. తెలుగు 5. ಕನ್ನಡ\n\n❌ Invalid choice! Enter 1-5\nInput: ${ussdState.buffer}_`;
+      ussdState.buffer = '';
+      return;
+    }
+  } else if (ussdState.step === 2) {
+    if (/^[1-3]$/.test(ussdState.buffer)) {
+      if (ussdState.buffer === '1') {
+        ussdState.step = 3; ussdState.buffer = '';
+      } else {
+        scr.innerText = `${ussdText[ussdState.lang].welcome}\n\n❌ Not implemented in demo\nInput: ${ussdState.buffer}_`;
+        ussdState.buffer = '';
+        return;
+      }
+    } else {
+      scr.innerText = `${ussdText[ussdState.lang].welcome}\n\n❌ Invalid! Enter 1, 2, or 3\nInput: ${ussdState.buffer}_`;
+      ussdState.buffer = '';
+      return;
+    }
+  } else if (ussdState.step === 3) {
+    if (!validateUSSDAge(ussdState.buffer)) {
+      scr.innerText = `${ussdText[ussdState.lang].age}\n\n❌ Invalid age! Enter 1-150\nInput: ${ussdState.buffer}_`;
+      ussdState.buffer = '';
+      return;
+    }
+    ussdState.tempAge = parseInt(ussdState.buffer);
+    ussdState.step = 4; ussdState.buffer = '';
+  } else if (ussdState.step === 4) {
+    if (/^[1-2]$/.test(ussdState.buffer)) {
+      ussdState.step = 5; ussdState.buffer = '';
+      await APIService.submitTriage({ name: "USSD User", age: ussdState.tempAge || 50, syms: ["Chest pain"], sev: 4 });
+      loadQueue();
+    } else {
+      scr.innerText = `${ussdText[ussdState.lang].syms}\n\n❌ Invalid! Enter 1 or 2\nInput: ${ussdState.buffer}_`;
+      ussdState.buffer = '';
+      return;
+    }
+  } else {
+    ussdState.buffer = '';
+  }
+  renderUssdScreen();
+}
 
     /* =========================================================
        SMS Simulator Logic
        ========================================================= */
-    const smsFlow = [
-      { trigger: 'yes', resp: "Great! What is the patient's age?" },
-      { trigger: '*', resp: "Does the patient have fever, chest pain, or trauma? Please list symptoms." },
-      { trigger: '*', resp: "Noted. On a scale of 1-5, how severe is the pain/discomfort?" },
-      { trigger: '*', resp: "✅ Registration complete. Token: P-404. Priority: MEDIUM. Wait time: ~15 mins. We will notify you when it's your turn. The doctor will review your case shortly." }
-    ];
     let smsStep = 0;
 
     async function sendSMS() {
       const inp = document.getElementById('chat-input');
-      const val = inp.value.trim();
-      if(!val) return;
-      
+      const val = inp.value.trim().toLowerCase();
+      if (!val) return;
+
       const body = document.getElementById('chat-body');
-      body.innerHTML += `<div class="chat-bubble chat-right">${val}</div>`;
+      body.innerHTML += `<div class="chat-bubble chat-right">${inp.value}</div>`;
       inp.value = '';
       body.scrollTop = body.scrollHeight;
 
-      // Simulate Bot Typings
       setTimeout(async () => {
-        let msg = "I didn't understand that.";
-        if (smsStep < smsFlow.length) {
-          msg = smsFlow[smsStep].resp;
-          if (smsStep === smsFlow.length - 1) {
-            await APIService.submitTriage({ name: "SMS User", age: 30, syms: ["Fever"], sev: 3 });
-            loadQueue();
+        let msg = "Sorry, I didn't understand that.";
+
+        if (smsStep === 0) {
+          if (val === 'yes' || val === 'y') {
+            msg = "Great! What is the patient's age?";
+            smsStep = 1;
+          } else if (val === 'no') {
+            msg = "Thank you. You can register later. Have a good day!";
+            smsStep = 4;  // End flow
+          } else {
+            msg = "❌ Please reply with **YES** or **NO** only.";
           }
-          smsStep++;
+        } 
+        else if (smsStep === 1) {
+          const age = parseInt(val);
+          if (!isNaN(age) && age >= 1 && age <= 150) {
+            msg = "Does the patient have fever, chest pain, or trauma? Please list symptoms.";
+            smsStep = 2;
+          } else {
+            msg = "❌ Please enter a valid age (1-150).";
+          }
+        } 
+        else if (smsStep === 2) {
+          msg = "Noted. On a scale of 1-5, how severe is the pain/discomfort?";
+          smsStep = 3;
+        } 
+        else if (smsStep === 3) {
+          const sev = parseInt(val);
+          if (!isNaN(sev) && sev >= 1 && sev <= 5) {
+            msg = "✅ Registration complete. Token: P-404. Priority: MEDIUM. Wait time: ~15 mins. Doctor will review your case shortly.";
+            await APIService.submitTriage({ name: "SMS User", age: 30, syms: ["Fever"], sev: sev });
+            loadQueue();
+            smsStep = 4;
+          } else {
+            msg = "❌ Please enter a valid number between 1 and 5 for the severity.";
+          }
         }
+
         body.innerHTML += `<div class="chat-bubble chat-left">${msg}</div>`;
         body.scrollTop = body.scrollHeight;
-      }, 1000);
+      }, 800);
     }
-
 
     // Initialize Real-time Map
     function initMap() {
@@ -1690,6 +1964,264 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
         includedLanguages: 'en,hi,ta,te,kn',
         layout: google.translate.TranslateElement.InlineLayout.SIMPLE
       }, 'google_translate_element');
+    }
+  </script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then((registration) => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch((error) => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
+  </script>
+  <script>
+    let weeklyChart, triageChart, symsChart;
+    async function initAnalytics() {
+      const clrRed = '#C0392B';
+      const clrOrange = '#E67E22';
+      const clrGreen = '#1A6B48';
+      const clrBlue = '#2980B9';
+      
+      const ctxWeekly = document.getElementById('chart-weekly').getContext('2d');
+      weeklyChart = new Chart(ctxWeekly, {
+        type: 'line',
+        data: {
+          labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Today'],
+          datasets: [{
+            label: 'Total Patients',
+            data: [42, 58, 45, 62, 70, 48, 0], 
+            borderColor: clrBlue,
+            backgroundColor: 'rgba(41, 128, 185, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+      });
+
+      const ctxTriage = document.getElementById('chart-triage').getContext('2d');
+      triageChart = new Chart(ctxTriage, {
+        type: 'doughnut',
+        data: {
+          labels: ['Critical (Red)', 'Moderate (Orange)', 'Mild (Green)'],
+          datasets: [{
+            data: [0, 0, 0],
+            backgroundColor: [clrRed, clrOrange, clrGreen],
+            borderWidth: 0
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      const ctxSyms = document.getElementById('chart-symptoms').getContext('2d');
+      symsChart = new Chart(ctxSyms, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Reported Cases',
+            data: [],
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+      await updateAnalytics();
+    }
+
+    async function updateAnalytics() {
+      if (!triageChart || !symsChart || !weeklyChart) return;
+      const allPatients = await APIService.getQueue();
+      let red = 0, orange = 0, green = 0;
+      allPatients.forEach(p => {
+        if (p.priority === 'RED') red++;
+        else if (p.priority === 'ORANGE') orange++;
+        else green++;
+      });
+      triageChart.data.datasets[0].data = [red, orange, green];
+      triageChart.update();
+      
+      let symCounts = {};
+      allPatients.forEach(p => {
+        p.syms.forEach(sym => {
+          symCounts[sym] = (symCounts[sym] || 0) + 1;
+        });
+      });
+
+      const sortedSyms = Object.entries(symCounts).sort((a,b) => b[1] - a[1]);
+      const topSymLabels = sortedSyms.map(s => s[0]).slice(0, 6);
+      const topSymData = sortedSyms.map(s => s[1]).slice(0, 6);
+      
+      symsChart.data.labels = topSymLabels;
+      symsChart.data.datasets[0].data = topSymData;
+      
+      symsChart.data.datasets[0].backgroundColor = topSymLabels.map(s => 
+         ['Chest pain','Breathlessness','Seizure'].includes(s) ? '#C0392B' : 
+         ['High fever','Severe headache','Injury'].includes(s) ? '#E67E22' : 
+         '#1A6B48' 
+      );
+      symsChart.update();
+ 
+      const weeklyData = weeklyChart.data.datasets[0].data;
+      weeklyData[6] = allPatients.length;
+      weeklyChart.update();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      setTimeout(initAnalytics, 500); 
+    });
+  </script>
+  <script>
+    let currentAdminAction = '';
+    let currentEditTarget = null;
+
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.innerText === 'Manage') {
+        currentEditTarget = e.target.closest('tr');
+      }
+    });
+
+    function openAdminModal(actionType) {
+      currentAdminAction = actionType;
+      const modal = document.getElementById('admin-action-modal');
+      const title = document.getElementById('admin-modal-title');
+      const desc = document.getElementById('admin-modal-desc');
+      const inputLabel = document.getElementById('admin-modal-input-label');
+      const btn = document.getElementById('admin-submit-btn');
+      const inputField = modal.querySelector('.input-field');
+      
+      btn.className = "btn btn-primary btn-full";
+      btn.style.cssText = "";
+      btn.innerHTML = "<span>Confirm Action</span>"; 
+      inputField.value = ''; 
+
+      if (actionType === 'add-phc') {
+        title.innerText = "Add New PHC Facility";
+        desc.innerText = "Register a new Primary Health Centre to the network.";
+        inputLabel.innerText = "Facility Name & District";
+      } else if (actionType === 'manage-phc') {
+        title.innerText = "Manage PHC Settings";
+        desc.innerText = "Update kiosk limits, toggle online status, or view local logs.";
+        inputLabel.innerText = "Override Status Command";
+      } else if (actionType === 'assign-shift') {
+        title.innerText = "Assign Doctor Shift";
+        desc.innerText = "Select an available doctor from the roster to assign a new time slot.";
+        inputLabel.innerText = "Format: Name, Role, Shift, Status (e.g. Dr. Smith, Surgeon, 9AM, On Duty)";
+      }
+      
+      modal.classList.add('active');
+    }
+
+    function closeAdminModal() {
+      document.getElementById('admin-action-modal').classList.remove('active');
+    }
+
+    function submitAdminAction() {
+      const btn = document.getElementById('admin-submit-btn');
+      const modal = document.getElementById('admin-action-modal');
+      const inputField = modal.querySelector('.input-field');
+      const inputValue = inputField.value.trim();
+      
+      if (!inputValue) return; 
+
+      btn.classList.add('loading');
+      btn.innerHTML = "<span>Processing...</span>";
+      
+      setTimeout(() => {
+        
+        if (currentAdminAction === 'add-phc') {
+            const table = document.querySelector('#panel-admin .score-table tbody') || document.querySelector('#panel-admin .score-table');
+            const newRow = document.createElement('tr');
+            
+            const parts = inputValue.split(',');
+            const name = parts[0] ? parts[0].trim() : 'New PHC';
+            const location = parts[1] ? parts[1].trim() : 'Local Block';
+
+            newRow.innerHTML = `
+                <td>${name}</td>
+                <td>${location}</td>
+                <td>0 Active</td>
+                <td><span class="pill pill-green">Online</span></td>
+                <td><a href="#" style="color:var(--primary); font-size:12px; font-weight:600; text-decoration:none;" onclick="event.preventDefault(); openAdminModal('manage-phc')">Manage</a></td>
+            `;
+            table.appendChild(newRow);
+        } 
+        
+        else if (currentAdminAction === 'assign-shift') {
+            const docList = document.querySelectorAll('#panel-admin .card-body')[1]; 
+            const newDoc = document.createElement('div');
+            
+            newDoc.style = "display:flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg); border-radius: var(--radius-sm); border: 1px solid var(--border);";
+            
+            const parts = inputValue.split(',');
+            const name = parts[0] ? parts[0].trim() : 'New Doctor';
+            let role = 'Specialist';
+            let shift = 'Today • On Call';
+            let status = 'Assigned';
+
+            if (parts.length === 2) {
+                shift = parts[1].trim(); 
+            } else if (parts.length === 3) {
+                role = parts[1].trim();  
+                shift = parts[2].trim();
+            } else if (parts.length >= 4) {
+                role = parts[1].trim();
+                shift = parts[2].trim();
+                status = parts[3].trim();
+            }
+            
+            let initials = name.replace(/Dr\.?/i, '').trim().substring(0,2).toUpperCase();
+            
+            let pillClass = "pill-green";
+            if (status.toLowerCase().includes('schedule')) pillClass = "pill-orange";
+
+            newDoc.innerHTML = `
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: #D1F2EB; color: #117A65; display: flex; align-items: center; justify-content: center; font-weight: 700;">${initials}</div>
+                <div>
+                  <div style="font-weight: 600; font-size: 14px; color: var(--text-main);">${name}</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">${role}</div>
+                </div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 12px; font-weight: 600; margin-bottom:4px;">${shift}</div>
+                <span class="pill ${pillClass}">${status}</span>
+              </div>
+            `;
+            docList.appendChild(newDoc);
+        }
+        
+        else if (currentAdminAction === 'manage-phc' && currentEditTarget) {
+            let val = inputValue.toUpperCase();
+            let statusCell = currentEditTarget.querySelectorAll('td')[3];
+            if (statusCell) {
+                if (val.includes('OFFLINE') || val.includes('DOWN')) {
+                    statusCell.innerHTML = '<span class="pill pill-red">Offline</span>';
+                } else if (val.includes('ONLINE') || val.includes('UP')) {
+                    statusCell.innerHTML = '<span class="pill pill-green">Online</span>';
+                }
+            }
+        }
+
+        btn.classList.remove('loading');
+        btn.className = "btn btn-primary btn-full";
+        btn.style.cssText = "background-color: var(--primary) !important; color: white !important;";
+        btn.innerHTML = "<span>✅ Added Successfully</span>";
+        
+        setTimeout(() => {
+          closeAdminModal();
+        }, 1200);
+      }, 600);
     }
   </script>
   <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>

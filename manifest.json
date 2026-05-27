@@ -1,0 +1,16 @@
+{
+  "name": "Swasthya Queue",
+  "short_name": "Swasthya",
+  "description": "Teleconsultation Queue & Triage Management System for Rural Clinics",
+  "start_url": "./Swasthya-queue%20(genaiproject).html",
+  "display": "standalone",
+  "background_color": "#FAFAF8",
+  "theme_color": "#1A6B48",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3004/3004458.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -9,6 +9,7 @@
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <style>
     :root {
@@ -109,6 +110,30 @@
 .dark-mode .modal-content {
   background: #1e1e1e;
   color: white;
+}
+
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
+}
+
+body {
+    top: 0 !important;
+}
+
+.goog-te-gadget-icon {
+    display: none !important;
+}
+
+.goog-logo-link {
+    display: none !important;
+}
+
+.goog-te-gadget {
+    font-size: 0 !important;
+}
+
+iframe.goog-te-banner-frame {
+    display: none !important;
 }
 /* Smooth transition */
 body,.nav,.nav-tab,.card,.panel,button,input,table,
@@ -341,25 +366,34 @@ body,.nav,.nav-tab,.card,.panel,button,input,table,
 <body>
 
   <!-- Floating Language Widget -->
-  <div class="lang-widget">
-    <div style="font-size: 20px;">🌐</div>
-    <div id="google_translate_element"></div>
-  </div>
+
 
   <!-- HERO -->
   <header class="hero">
+    
     <div class="container hero-content">
       <div>
         <div class="hero-eyebrow">Smart Triage & Referral OS</div>
+        
         <h1 class="hero-title">स्वास्थ्य Queue<br><span>Swasthya Queue</span></h1>
         <p class="hero-sub">AI-powered teleconsultation & emergency triage platform for rural primary health centres. Instant assessment via Web, SMS or USSD.</p>
+        
       </div>
-
+        <div class="language-switcher notranslate">
+          <select id="lang-select" onchange="changeLanguage(this.value)">
+              <option value="en">🇬🇧 English</option>
+              <option value="hi">🇮🇳 हिन्दी</option>
+              <option value="ta">தமிழ்</option>
+              <option value="te">తెలుగు</option>
+              <option value="kn">ಕನ್ನಡ</option>
+          </select>
+      </div>
     </div>
   </header>
 
   <!-- NAVIGATION -->
   <nav class="nav" id="main-nav" style="display: none;">
+    
     <div class="nav-inner">
       <button id="tab-patient" class="nav-tab active" onclick="switchTab('patient')">
         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -398,6 +432,8 @@ body,.nav,.nav-tab,.card,.panel,button,input,table,
         <h2 style="font-size: 32px; font-weight: 800; letter-spacing: -0.5px;">Select Your Portal</h2>
         <p style="color: var(--text-muted); font-size: 16px;">Choose your operational mode to continue.</p>
       </div>
+      <div class="lang-selector">
+</div>
       <div class="portal-grid">
         <button class="portal-card" onclick="enterPortal('clinic')">
           <div class="portal-icon">🏥</div>
@@ -788,7 +824,33 @@ body,.nav,.nav-tab,.card,.panel,button,input,table,
 .tl-content{flex:1}
 .tl-label{font-size:13px;font-weight:500}
 .tl-time{font-size:11px;color:var(--txt3);margin-top:1px}
+#lang-select{
+    padding:10px 14px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    cursor:pointer;
+    font-size:14px;
+}
 
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+.goog-logo-link,
+.goog-te-gadget,
+.goog-te-gadget span,
+.goog-te-balloon-frame,
+.VIpgJd-ZVi9od-ORHb-OEVmcd,
+.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+.skiptranslate {
+    display:none !important;
+}
+
+body {
+    top:0 !important;
+}
+
+iframe.goog-te-banner-frame {
+    display:none !important;
+}
 /* HOW IT WORKS PANEL */
 </style>
 <div class="panel" id="panel-dispatch">
@@ -1008,6 +1070,22 @@ PHC contact: +91-732-XXXXXX</div>
   /* ========================= */
 /* DARK MODE TOGGLE */
 /* ========================= */
+setInterval(() => {
+    const banner = document.querySelector('.goog-te-banner-frame');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+
+    document.body.style.top = '0px';
+}, 500);
+
+setInterval(() => {
+    const banner = document.querySelector('.goog-te-banner-frame');
+    if (banner) {
+        banner.style.display = 'none';
+    }
+    document.body.style.top = '0px';
+}, 100);
 
 const darkModeBtn = document.getElementById("darkModeToggle");
 
@@ -1059,7 +1137,20 @@ function triggerAmbuOnly(){dispatchAmbu(1);}
 function triggerNotify(){sendReferral();}
 function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable='true';m.focus();m.style.borderLeftColor='var(--purple)';}
 
+function changeLanguage(lang) {
 
+    const interval = setInterval(() => {
+
+        const combo = document.querySelector('.goog-te-combo');
+
+        if (combo) {
+            combo.value = lang;
+            combo.dispatchEvent(new Event('change'));
+            clearInterval(interval);
+        }
+
+    }, 500);
+}
 </script>
 
 <style>
@@ -1773,16 +1864,16 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
     document.addEventListener("DOMContentLoaded", init);
 
   </script>
-  
-  <script type="text/javascript">
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
+
+  <script>
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
         pageLanguage: 'en',
         includedLanguages: 'en,hi,ta,te,kn',
-        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
-      }, 'google_translate_element');
-    }
-  </script>
+        autoDisplay: false
+    }, 'google_translate_element');
+}
+</script>
   <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>

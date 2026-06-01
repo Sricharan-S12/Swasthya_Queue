@@ -1,234 +1,339 @@
-# Swasthya-Queue
-Teleconsultation Queue &amp; Triage Management System for Rural Clinics
+# 🏥 Swasthya Queue
 
-DEPLOYMENT LINK : https://swasthya-queue.netlify.app/
+<div align="center">
 
-## Doctor Dashboard Login Credentials
+### AI-Powered Teleconsultation, Triage & Emergency Referral Platform
 
-| Field      | Details     |
-|------------|-------------|
-| **Portal** | Doctor Dashboard (Secure Login) |
-| **Username** | `Doctor` |
-| **Password** | `Doctor123` |
+Designed for Rural Primary Health Centres (PHCs) to streamline patient prioritization, teleconsultation workflows, and emergency referrals.
 
-# स्वास्थ्य Queue — Swasthya Queue
+[![Live Demo](https://img.shields.io/badge/Live-Demo-success?style=for-the-badge)](https://swasthya-queue.netlify.app/)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge\&logo=html5\&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge\&logo=css3\&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-ES6-F7DF1E?style=for-the-badge\&logo=javascript\&logoColor=black)
 
-> **AI-powered teleconsultation & emergency triage platform for rural Primary Health Centres**
+🌐 **Live Demo:** https://swasthya-queue.netlify.app/
 
-Swasthya Queue is a multi-channel patient triage, queue management, and emergency referral system designed for rural PHCs (Primary Health Centres) in India. It enables instant patient assessment via Web, SMS, or USSD — requiring no smartphone or internet connection.
+</div>
 
 ---
 
-## Table of Contents
+## 📖 Overview
 
-- [Overview](#overview)
-- [Features](#features)
-- [Access Channels](#access-channels)
-- [Triage Scoring Algorithm](#triage-scoring-algorithm)
-- [Portals & Roles](#portals--roles)
-- [Referral & Dispatch System](#referral--dispatch-system)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-- [Demo Credentials](#demo-credentials)
-- [Project Structure](#project-structure)
+Swasthya Queue is an intelligent healthcare workflow platform built to address challenges faced by rural healthcare centres, including patient overcrowding, delayed triage, limited specialist availability, and inefficient referral systems.
 
----
+The platform combines:
 
-## Overview
+* Smart patient triage
+* Dynamic queue management
+* Teleconsultation support
+* Emergency referral workflows
+* Multi-channel accessibility
+* Offline-first operations
 
-Rural PHCs in India often face challenges with patient overflow, lack of structured triage, and delayed referrals for critical cases. Swasthya Queue solves this by:
-
-- Triaging patients automatically in under 1 second using a START-inspired scoring algorithm
-- Supporting registration via web kiosk, USSD `*599#`, or WhatsApp/SMS chatbot
-- Giving doctors a pre-built clinical brief before every teleconsultation
-- Enabling one-tap emergency referrals — bed booking, ambulance dispatch, and referral notice all sent simultaneously
+to help healthcare providers deliver faster and more efficient care.
 
 ---
 
-## Features
+## 📑 Table of Contents
 
-### Patient Registration
-- Multi-step web form with language selection (English, Hindi, Tamil, Telugu, Kannada)
-- Symptom selector with visual icons
-- Severity scale (1–5, Mild to Critical)
-- Duration of symptoms input
-- Generates a colour-coded queue token with estimated wait time
-
-### Automated Triage
-- Scores patients based on symptom criticality, severity rating, and age
-- Applies 1.5× multiplier for patients above 60 or below 5 years
-- Assigns priority: 🔴 RED (Critical), 🟠 ORANGE (Moderate), 🟢 GREEN (Routine)
-- Queue auto-reorders in real time whenever a new patient registers
-
-### Doctor Dashboard (Secured)
-- Live patient queue sorted by triage score
-- Expandable patient cards with vitals, symptom list, and AI-generated 3-sentence clinical brief
-- One-click teleconsultation via secure video call
-- In-app messaging to communicate directly with the patient
-- One-button referral escalation to Command Center
-
-### Command Center (Referral & Dispatch)
-- Live alert bar for critical patients requiring immediate referral
-- Nearest hospitals ranked by distance, bed availability, and specialist match
-- Real-time ICU and general bed count display
-- 108 ambulance network integration with live unit locations and ETAs
-- OpenStreetMap live route map with animated ambulance marker
-- Auto-generated referral notice (editable) sent via SMS + NIC eReferral portal
-- Referral status timeline — both doctor and hospital see the same state
-
-### Access Channels
-| Channel | Requirements | Best For |
-|---|---|---|
-| Web / App | Smartphone or shared clinic tablet | Clinic kiosk, ASHA/ANM workers |
-| USSD `*599#` | Any 2G keypad phone, no internet | Remote villages, no-data zones |
-| WhatsApp / SMS | Basic phone with SMS capability | Async, literate patients |
+* Overview
+* Problem Statement
+* Key Features
+* System Architecture
+* Access Channels
+* Triage Priority Model
+* Doctor Dashboard Credentials
+* Technology Stack
+* Getting Started
+* Browser Support
+* Project Structure
+* Roadmap
+* Contributing
+* License
 
 ---
 
-## Triage Scoring Algorithm
+## 🎯 Problem Statement
 
-Inspired by the START (Simple Triage and Rapid Treatment) protocol:
+Rural Primary Health Centres often struggle with:
 
-| Factor | Score |
-|---|---|
-| Chest pain / Breathlessness / Seizure | +4 each |
-| High fever / Severe headache / Injury | +2 each |
-| Vomiting / Abdominal pain / Cold | +1 each |
-| Patient-reported severity | +1 to +5 |
-| Age > 60 or < 5 years | × 1.5 multiplier |
+* High patient volumes
+* Delayed identification of critical cases
+* Manual queue management
+* Connectivity limitations
+* Inefficient emergency referral coordination
 
-**Priority bands:**
+These challenges can result in delayed treatment for patients who require urgent medical attention.
 
-| Score | Priority | Action |
-|---|---|---|
-| ≥ 8 | 🔴 RED — Critical | See immediately |
-| 4–7 | 🟠 ORANGE — Moderate | Within 30 minutes |
-| 1–3 | 🟢 GREEN — Mild | Normal queue |
+Swasthya Queue introduces a structured triage and referral ecosystem to improve operational efficiency and patient outcomes.
 
 ---
 
-## Portals & Roles
+## ✨ Key Features
 
-### Clinic Operations (Public)
-No login required. Provides access to:
-- Patient Registration (Web, USSD, SMS flows)
-- Command Center / Referral Dashboard
+### Smart Triage Engine
 
-### Doctor Dashboard (Secured)
-Login required. Provides access to:
-- Live priority queue with expandable patient briefs
-- Video teleconsultation
-- In-app patient messaging
-- Referral escalation
+* START-inspired triage algorithm
+* Dynamic patient prioritization
+* Real-time queue reordering
+* Age-sensitive risk scoring
+* Automated severity classification
+
+### Multi-Channel Patient Registration
+
+* 🌐 Web Portal
+* 📟 USSD (*599#)
+* 💬 WhatsApp
+* 📱 SMS
+
+### Doctor Dashboard
+
+* Secure clinician login
+* Live patient queue
+* AI-generated patient summaries
+* Teleconsultation workflow
+* Patient messaging
+* Referral escalation
+
+### Emergency Command Center
+
+* Hospital matching
+* Bed availability tracking
+* Ambulance dispatch workflow
+* Referral management
+* Real-time status monitoring
+
+### Offline-First Operations
+
+* Local data persistence
+* Connectivity monitoring
+* Automatic synchronization
+* Recovery after network interruption
+
+### Multi-Language Accessibility
+
+* English
+* Hindi
+* Tamil
+* Telugu
+* Kannada
 
 ---
 
-## Referral & Dispatch System
+## 🏗️ System Architecture
 
-When a critical patient needs transfer, the Command Center enables:
-
-1. **Hospital selection** — Nearest hospitals ranked by distance + bed availability + specialist presence
-2. **Bed reservation** — One-click ICU or general bed booking with real-time confirmation
-3. **Ambulance dispatch** — 108 network integration; nearest available unit auto-suggested with live ETA
-4. **Referral notice** — Auto-generated clinical summary sent via SMS + NIC eReferral portal
-5. **Live timeline** — Status progression visible to both referring PHC and receiving hospital
-
-The entire referral chain — bed + ambulance + notice — can be triggered in under 10 seconds.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Frontend | Vanilla HTML, CSS, JavaScript |
-| Maps | Leaflet.js + OpenStreetMap tiles |
-| Translations | Google Translate Widget API |
-| USSD simulation | Custom multi-step state machine |
-| SMS/WhatsApp sim | Scripted conversational flow (Dialogflow/Gemini in production) |
-| Backend (mock) | In-browser `APIService` object simulating network latency and ML inference |
-| Fonts | Inter (Google Fonts) |
-
-**Production integrations planned:**
-- Telephony: Plivo / Twilio USSD Bridge
-- NLP: Dialogflow / Google Gemini
-- Referral: NIC eReferral portal
-- Ambulance: 108 Ambulance Network API (State Health Dept.)
-- Video: eSanjeevani / WebRTC E2E
+```text
+Patient Registration
+        │
+        ▼
+  Triage Engine
+        │
+        ▼
+ Priority Queue
+        │
+        ▼
+ Doctor Dashboard
+        │
+        ▼
+ Referral Command Center
+        │
+        ▼
+Hospital & Ambulance Network
+```
 
 ---
 
-## Getting Started
+## 🚑 Access Channels
 
-Swasthya Queue is a single-file HTML application. No build step or server required.
+| Channel      | Connectivity Requirement | Target Users             |
+| ------------ | ------------------------ | ------------------------ |
+| Web Portal   | Internet Available       | Clinics & Health Workers |
+| USSD (*599#) | No Internet Required     | Rural Communities        |
+| WhatsApp     | Smartphone Users         | Remote Patients          |
+| SMS          | Basic Phones             | Low-Connectivity Areas   |
+
+---
+
+## 🚨 Triage Priority Model
+
+| Priority  | Category | Action                |
+| --------- | -------- | --------------------- |
+| 🔴 RED    | Critical | Immediate Attention   |
+| 🟠 ORANGE | Moderate | Priority Consultation |
+| 🟢 GREEN  | Routine  | Standard Queue        |
+
+### Scoring Framework
+
+| Clinical Factor         | Score    |
+| ----------------------- | -------- |
+| Chest Pain              | +4       |
+| Breathlessness          | +4       |
+| Seizure                 | +4       |
+| High Fever              | +2       |
+| Severe Headache         | +2       |
+| Injury                  | +2       |
+| Vomiting                | +1       |
+| Abdominal Pain          | +1       |
+| Common Cold             | +1       |
+| Patient Severity Rating | +1 to +5 |
+| Age Risk Multiplier     | ×1.5     |
+
+---
+
+## 👨‍⚕️ Doctor Dashboard Credentials
+
+| Field    | Value       |
+| -------- | ----------- |
+| Username | `doctor`    |
+| Password | `doctor123` |
+
+---
+
+## 🛠️ Technology Stack
+
+### Frontend
+
+* HTML5
+* CSS3
+* JavaScript (ES6)
+
+### Mapping & Geospatial Services
+
+* Leaflet.js
+* OpenStreetMap
+
+### Communication Channels
+
+* USSD Workflow Simulation
+* SMS Workflow Simulation
+* WhatsApp Workflow Simulation
+
+### Localization
+
+* Google Translate Widget
+
+### Typography
+
+* Inter
+* Outfit
+
+---
+
+## 🚀 Getting Started
+
+### Clone Repository
 
 ```bash
-# Clone or download the project
-git clone https://github.com/your-org/swasthya-queue.git
+git clone https://github.com/Sricharan-S12/Swasthya_Queue.git
+cd Swasthya_Queue
+```
 
-# Open in browser
+### Run Locally
+
+#### macOS
+
+```bash
 open index.html
 ```
 
-Or simply open `index.html` directly in any modern browser.
+#### Windows
 
-> **Note:** The map panel (`#panel-dispatch`) requires an internet connection to load OpenStreetMap tiles. All other panels work fully offline.
-
----
-
-## Demo Credentials
-
-| Role | Username | Password |
-|---|---|---|
-| Doctor | `doctor` | `doctor123` |
-
-Use these to access the secured **Doctor Dashboard** portal.
-
----
-
-## Project Structure
-
-```
-swasthya-queue/
-│
-├── index.html              # Entire application (single-file)
-│
-│   Inline sections:
-│   ├── Hero & Navigation
-│   ├── #panel-landing      — Portal selector (Clinic / Doctor)
-│   ├── #panel-patient      — Patient registration (Web / USSD / SMS flows)
-│   ├── #panel-doctor       — Doctor dashboard with live queue
-│   ├── #panel-dispatch     — Command Center: referral, ambulance, hospital
-│   └── #panel-about        — How it works: flow steps, algorithm, channels
-│
-│   Modals:
-│   ├── #auth-modal         — Doctor login
-│   ├── #video-call-modal   — Teleconsultation overlay
-│   ├── #message-modal      — In-app patient messaging
-│   └── #sys-modal          — Dispatch confirmation notification
-│
-└── (no external dependencies beyond CDN links)
+```cmd
+start index.html
 ```
 
----
+#### Linux
 
-## Roadmap / Planned Enhancements
+```bash
+xdg-open index.html
+```
 
-- [ ] Integration with real 108 ambulance dispatch API
-- [ ] eSanjeevani teleconsultation deep-link for video calls
-- [ ] Offline PWA support with service workers for low-connectivity zones
-- [ ] ABHA (Ayushman Bharat Health Account) ID lookup at registration
-- [ ] Aadhaar-based patient record linking
-- [ ] Push notifications via Firebase for queue status updates
-- [ ] Analytics dashboard with daily/weekly patient trends
-- [ ] Admin panel for PHC management and doctor scheduling
+No installation or build process is required.
 
 ---
 
-## License
+## 🌍 Browser Support
 
-This project is intended for public health use. Contact the maintainers for licensing terms before commercial deployment.
+| Browser | Supported |
+| ------- | --------- |
+| Chrome  | ✅         |
+| Edge    | ✅         |
+| Firefox | ✅         |
+| Safari  | ✅         |
 
 ---
 
-*Built to bridge the last mile in rural healthcare access.*
+## 📁 Project Structure
+
+```text
+Swasthya_Queue/
+│
+├── README.md
+├── Swasthya-queue (genaiproject).html
+│
+├── Patient Registration Module
+├── Doctor Dashboard
+├── Referral Command Center
+├── Teleconsultation Module
+├── USSD Interface
+├── SMS Interface
+└── Offline Sync Layer
+```
+
+---
+
+## 🛣️ Roadmap
+
+### Healthcare Integrations
+
+* [ ] eSanjeevani Integration
+* [ ] ABHA ID Lookup
+* [ ] NIC eReferral Integration
+* [ ] State Ambulance APIs
+
+### Platform Enhancements
+
+* [ ] Progressive Web App Support
+* [ ] Push Notifications
+* [ ] Analytics Dashboard
+* [ ] PHC Administration Console
+
+### Intelligence Layer
+
+* [ ] Predictive Queue Analytics
+* [ ] AI Clinical Decision Support
+* [ ] Referral Optimization Engine
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome.
+
+### Workflow
+
+```bash
+git checkout -b feature/your-feature
+git commit -m "feat: add feature"
+git push origin feature/your-feature
+```
+
+Then create a Pull Request.
+
+---
+
+## 📄 License
+
+This project is intended for educational, research, and healthcare innovation purposes.
+
+For commercial deployment, please contact the project maintainers.
+
+---
+
+<div align="center">
+
+### Bridging the Last Mile of Rural Healthcare Access
+
+Empowering healthcare providers through intelligent triage, teleconsultation, and emergency referral workflows.
+
+</div>

@@ -1519,9 +1519,10 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
       const qData = await APIService.getQueue();
       qCont.innerHTML = '';
       
-      qData.forEach(p => {
+      qData.forEach((p, index) => {
         const cColor = p.priority === 'RED' ? 'red' : p.priority === 'ORANGE' ? 'orange' : 'primary';
         const init = p.name.substring(0,2).toUpperCase();
+        const estimatedWait = `${index * 5}m`;
         
         const html = `
           <div class="q-card" onclick="this.classList.toggle('expanded')">
@@ -1534,7 +1535,7 @@ function editMsg(){const m=document.getElementById('ref-msg');m.contentEditable=
               </div>
               <div class="q-status">
                 <div class="q-score" style="color: var(--${cColor}-dark);">${p.score}</div>
-                <div class="q-wait">Wait: ${p.wait}</div>
+                <div class="q-wait">Position: ${index + 1} • Wait: ${estimatedWait}</div>
               </div>
             </div>
             

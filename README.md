@@ -1,4 +1,4 @@
-# 🏥 Swasthya Queue
+﻿# 🏥 Swasthya Queue
 
 <div align="center">
 
@@ -269,7 +269,9 @@ No installation or build process is required.
 Swasthya_Queue/
 │
 ├── README.md
-├── Swasthya-queue (genaiproject).html
+├── index.html
+├── styles.css
+├── app.js
 │
 ├── Patient Registration Module
 ├── Doctor Dashboard

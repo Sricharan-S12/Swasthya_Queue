@@ -233,19 +233,19 @@ cd Swasthya_Queue
 #### macOS
 
 ```bash
-open index.html
+open "Swasthya-queue (genaiproject).html"
 ```
 
 #### Windows
 
 ```cmd
-start index.html
+start "" "Swasthya-queue (genaiproject).html"
 ```
 
 #### Linux
 
 ```bash
-xdg-open index.html
+xdg-open "Swasthya-queue (genaiproject).html"
 ```
 
 No installation or build process is required.

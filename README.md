@@ -267,18 +267,21 @@ No installation or build process is required.
 
 ```text
 Swasthya_Queue/
-│
 ├── README.md
-├── Swasthya-queue (genaiproject).html
-│
-├── Patient Registration Module
-├── Doctor Dashboard
-├── Referral Command Center
-├── Teleconsultation Module
-├── USSD Interface
-├── SMS Interface
-└── Offline Sync Layer
+└── Swasthya-queue (genaiproject).html
 ```
+
+### Planned Modules (Future Scope)
+
+The following modules are part of the intended project architecture and may be added in future development:
+
+* Patient Registration Module
+* Doctor Dashboard
+* Referral Command Center
+* Teleconsultation Module
+* USSD Interface
+* SMS Interface
+* Offline Sync Layer
 
 ---
 

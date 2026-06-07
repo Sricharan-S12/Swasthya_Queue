@@ -7,7 +7,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap"
     rel="stylesheet" />
-
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0D9488">
   <!-- Leaflet Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1798,6 +1799,7 @@
         </svg>
         How it Works
       </button>
+      <div id="offline-status">🟢 Online</div>
       <!-- ADD DARK MODE BUTTON HERE -->
       <button id="darkModeToggle" class="nav-tab">
         🌙 Dark Mode
@@ -3238,10 +3240,38 @@ setInterval(() => {
 
           }, 500);
 }
+function updateOnlineStatus() {
+    const status = document.getElementById("offline-status");
+
+    if (!status) return;
+
+    if (navigator.onLine) {
+        status.textContent = "🟢 Online";
+    } else {
+        status.textContent = "🔴 Offline Mode";
+    }
+}
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+
+updateOnlineStatus();
 
     </script>
 
     <style>
+      #offline-status {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    padding: 8px 14px;
+    border-radius: 20px;
+    background: #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 1000;
+}
       #panel-about {
         --green: #1A6B48;
         --green-l: #D5F5E3;
@@ -4253,9 +4283,17 @@ setInterval(() => {
     }, 'google_translate_element');
 }
   </script>
+  <script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js")
+        .then(() => console.log("Service Worker Registered"))
+        .catch(err => console.error("SW registration failed:", err));
+}
+</script>
 
   <script type="text/javascript"
     src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
 </body>
 
 </html>

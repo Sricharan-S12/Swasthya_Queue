@@ -1,0 +1,8 @@
+{
+  "name": "Swasthya Queue",
+  "short_name": "Swasthya",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#F1F5F9",
+  "theme_color": "#0D9488"
+}

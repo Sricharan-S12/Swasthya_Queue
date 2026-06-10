@@ -233,19 +233,19 @@ cd Swasthya_Queue
 #### macOS
 
 ```bash
-open index.html
+open "Swasthya-queue (genaiproject).html"
 ```
 
 #### Windows
 
 ```cmd
-start index.html
+start "" "Swasthya-queue (genaiproject).html"
 ```
 
 #### Linux
 
 ```bash
-xdg-open index.html
+xdg-open "Swasthya-queue (genaiproject).html"
 ```
 
 No installation or build process is required.
@@ -267,18 +267,21 @@ No installation or build process is required.
 
 ```text
 Swasthya_Queue/
-│
 ├── README.md
-├── Swasthya-queue (genaiproject).html
-│
-├── Patient Registration Module
-├── Doctor Dashboard
-├── Referral Command Center
-├── Teleconsultation Module
-├── USSD Interface
-├── SMS Interface
-└── Offline Sync Layer
+└── Swasthya-queue (genaiproject).html
 ```
+
+### Planned Modules (Future Scope)
+
+The following modules are part of the intended project architecture and may be added in future development:
+
+* Patient Registration Module
+* Doctor Dashboard
+* Referral Command Center
+* Teleconsultation Module
+* USSD Interface
+* SMS Interface
+* Offline Sync Layer
 
 ---
 
